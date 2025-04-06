@@ -35,7 +35,6 @@ interface FoodListing {
   image?: string;
   createdAt: string;
   userId: string;
-  userName?: string;
 }
 
 const FoodListingDetailPage = () => {
@@ -146,25 +145,25 @@ const FoodListingDetailPage = () => {
     // Save back to localStorage
     localStorage.setItem("foodRequests", JSON.stringify(allRequests));
     
-    // Add to user's purchase history with "Pending" status
+    // Add to user's purchase history
     const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userEmail}`) || "[]");
     
-    // Create a new purchase record with "Pending" status
-    const newPurchase = {
-      id: `purchase_${Date.now()}`,
+    // Create a purchase history entry
+    const purchaseEntry = {
+      id: Date.now().toString(),
       listingId: listing.id,
-      listingName: listing.name,
+      itemName: listing.name,
       quantity: listing.quantity,
       price: listing.listingType === "donate" ? "Free" : listing.price,
       status: "Pending",
-      purchaseDate: new Date().toISOString(),
-      providerName: listing.userName || "Food Provider",
+      date: new Date().toISOString(),
+      providerName: "Food Provider",
       providerEmail: listing.contactEmail,
-      category: listing.category
+      requestId: newRequest.id
     };
     
     // Add to purchase history
-    purchaseHistory.push(newPurchase);
+    purchaseHistory.push(purchaseEntry);
     
     // Save back to localStorage
     localStorage.setItem(`purchaseHistory_${userEmail}`, JSON.stringify(purchaseHistory));

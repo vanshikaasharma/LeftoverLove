@@ -220,17 +220,6 @@ const BrowseFoodPage = () => {
                 <CardContent>
                   <p className="text-gray-600">{listing.description}</p>
                 </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full bg-earth-500 hover:bg-earth-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Handle request food action
-                    }}
-                  >
-                    Request Food
-                  </Button>
-                </CardFooter>
               </Card>
             ))
           ) : (

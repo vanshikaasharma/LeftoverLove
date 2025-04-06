@@ -45,13 +45,9 @@ const ProfilePage = () => {
       const userDonationHistory = JSON.parse(localStorage.getItem(`donationHistory_${userData.email}`) || "[]");
       setDonationHistory(userDonationHistory);
       
-      // Load purchase history (mock data for now)
-      const mockPurchaseHistory = [
-        { id: 1, date: "2025-04-05", item: "Brioche bread", quantity: 2, status: "Completed" },
-        { id: 2, date: "2025-04-03", item: "Vegetables", quantity: 5, status: "Completed" },
-        { id: 3, date: "2025-03-28", item: "Canned Goods", quantity: 10, status: "Completed" }
-      ];
-      setPurchaseHistory(mockPurchaseHistory);
+      // Load purchase history from localStorage
+      const userPurchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userData.email}`) || "[]");
+      setPurchaseHistory(userPurchaseHistory);
     }
   }, [userData.email]);
 
@@ -193,11 +189,16 @@ const ProfilePage = () => {
                         {purchaseHistory.length > 0 ? (
                           purchaseHistory.map((item) => (
                             <TableRow key={item.id}>
-                              <TableCell>{item.date}</TableCell>
-                              <TableCell>{item.item}</TableCell>
+                              <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+                              <TableCell>{item.itemName}</TableCell>
                               <TableCell>{item.quantity}</TableCell>
                               <TableCell>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  item.status === "Completed" ? "bg-green-100 text-green-800" :
+                                  item.status === "Pending" ? "bg-amber-100 text-amber-800" :
+                                  item.status === "Rejected" ? "bg-red-100 text-red-800" :
+                                  "bg-gray-100 text-gray-800"
+                                }`}>
                                   {item.status}
                                 </span>
                               </TableCell>

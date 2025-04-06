@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingBag, Share2, Package, Clock, TrendingUp, Users, AlertCircle } from "lucide-react";
+import { ShoppingBag, Share2, Package, Clock, TrendingUp, Users, AlertCircle, Leaf, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -24,10 +24,11 @@ const DashboardPage = () => {
     totalDonationsListed: 0,
     activeDonations: 0,
     pendingRequests: 0,
-    totalConnections: 0
+    soilCredits: 0
   });
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isRequestsDialogOpen, setIsRequestsDialogOpen] = useState(false);
+  const [isSoilCreditsDialogOpen, setIsSoilCreditsDialogOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -79,25 +80,29 @@ const DashboardPage = () => {
     
     setPendingRequests(userPendingRequests);
     
+    // Calculate soil credits (1 credit per donation)
+    // This includes both edible donations and recently expired/unconsumable waste
+    const soilCredits = donationHistory.length;
+    
     // Set stats based on actual data
     setStats({
       totalDonationsListed: donationHistory.length,
       activeDonations: activeDonations,
       pendingRequests: userPendingRequests.length,
-      totalConnections: 8
+      soilCredits: soilCredits
     });
   }, [navigate]);
 
   const handleAction = (action: string) => {
     switch (action) {
-      case "find-food":
-        navigate("/browse-food");
-        break;
       case "share-food":
         navigate("/create-listing");
         break;
       case "view-profile":
         navigate("/profile");
+        break;
+      case "redeem-credits":
+        setIsSoilCreditsDialogOpen(true);
         break;
       default:
         break;
@@ -112,6 +117,9 @@ const DashboardPage = () => {
     const requestIndex = allRequests.findIndex((r: any) => r.id === requestId);
     if (requestIndex === -1) return;
     
+    // Get the request details
+    const request = allRequests[requestIndex];
+    
     // Update the request status
     allRequests[requestIndex].status = action === "approve" ? "Approved" : "Rejected";
     allRequests[requestIndex].updatedAt = new Date().toISOString();
@@ -119,42 +127,18 @@ const DashboardPage = () => {
     // Save back to localStorage
     localStorage.setItem("foodRequests", JSON.stringify(allRequests));
     
-    // If the request is approved, add it to the requester's purchase history
-    if (action === "approve") {
-      const request = allRequests[requestIndex];
+    // Update the requester's purchase history
+    const requesterEmail = request.requesterEmail;
+    const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${requesterEmail}`) || "[]");
+    
+    // Find the purchase history entry with the matching requestId
+    const purchaseIndex = purchaseHistory.findIndex((p: any) => p.requestId === requestId);
+    if (purchaseIndex !== -1) {
+      // Update the status
+      purchaseHistory[purchaseIndex].status = action === "approve" ? "Completed" : "Rejected";
       
-      // Get the listing details
-      const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
-      const listing = allListings.find((l: any) => l.id === request.listingId);
-      
-      if (listing) {
-        // Get the requester's purchase history
-        const requesterEmail = request.requesterEmail;
-        const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${requesterEmail}`) || "[]");
-        
-        // Create a new purchase record
-        const newPurchase = {
-          id: `purchase_${Date.now()}`,
-          listingId: listing.id,
-          listingName: listing.name,
-          quantity: listing.quantity,
-          price: listing.listingType === "donate" ? "Free" : listing.price,
-          status: "Completed",
-          purchaseDate: new Date().toISOString(),
-          providerName: listing.providerName || "Food Provider",
-          providerEmail: listing.providerEmail,
-          category: listing.category
-        };
-        
-        // Add to purchase history
-        purchaseHistory.push(newPurchase);
-        
-        // Save back to localStorage
-        localStorage.setItem(`purchaseHistory_${requesterEmail}`, JSON.stringify(purchaseHistory));
-        
-        // Show toast notification to the requester (in a real app, this would be a push notification)
-        toast.success(`Your request for "${listing.name}" has been approved!`);
-      }
+      // Save back to localStorage
+      localStorage.setItem(`purchaseHistory_${requesterEmail}`, JSON.stringify(purchaseHistory));
     }
     
     // Update the pending requests list
@@ -198,30 +182,30 @@ const DashboardPage = () => {
                   </>
                 ) : (
                   <>
-                    <ShoppingBag className="text-green-500" />
-                    Find Food
+                    <Leaf className="text-green-500" />
+                    Soil Credits
                   </>
                 )}
               </CardTitle>
               <CardDescription>
                 {userRole === "provider" 
-                  ? "List your excess food to help those in need" 
-                  : "Browse available food donations and products"}
+                  ? "List your excess food to help those in need and earn Soil Credits" 
+                  : "View and redeem your Soil Credits for fresh produce or meals"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
                 {userRole === "provider" 
-                  ? "Create a new listing to share your surplus food with the community." 
-                  : "Find free or low-cost food items available in your community."}
+                  ? "Create a new listing to share your surplus food with the community and earn Soil Credits." 
+                  : "Use your Soil Credits to get fresh produce or meals from community partners."}
               </p>
             </CardContent>
             <CardFooter>
               <Button 
                 className="w-full bg-green-500 hover:bg-green-600"
-                onClick={() => handleAction(userRole === "provider" ? "share-food" : "find-food")}
+                onClick={() => handleAction(userRole === "provider" ? "share-food" : "redeem-credits")}
               >
-                {userRole === "provider" ? "Create New Listing" : "Browse Food"}
+                {userRole === "provider" ? "Create New Listing" : "Redeem Credits"}
               </Button>
             </CardFooter>
           </Card>
@@ -255,7 +239,7 @@ const DashboardPage = () => {
         {/* Stats Section */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Activity</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -294,16 +278,35 @@ const DashboardPage = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
+          </div>
+        </div>
+        
+        {/* Soil Credits Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Soil Credits</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-green-100 p-3 rounded-full">
+                  <Leaf className="h-8 w-8 text-green-600" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-500">Connections</p>
-                  <p className="text-2xl font-bold text-gray-800">{stats.totalConnections}</p>
+                  <h3 className="text-2xl font-bold text-gray-800">{stats.soilCredits}</h3>
+                  <p className="text-gray-600">Soil Credits available</p>
                 </div>
-                <div className="bg-yellow-100 p-2 rounded-full">
-                  <Users className="h-5 w-5 text-yellow-600" />
-                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-600">
+                  {userRole === "provider" 
+                    ? "Earn 1 Soil Credit for each food donation or recently expired produce you donate." 
+                    : "Redeem your Soil Credits for free groceries or meals from local partners."}
+                </p>
+                <Button 
+                  className="bg-green-500 hover:bg-green-600"
+                  onClick={() => handleAction(userRole === "provider" ? "share-food" : "redeem-credits")}
+                >
+                  {userRole === "provider" ? "Donate Food" : "Redeem Credits"}
+                </Button>
               </div>
             </div>
           </div>
@@ -342,7 +345,7 @@ const DashboardPage = () => {
               </p>
               <Button 
                 className="mt-4 bg-green-500 hover:bg-green-600"
-                onClick={() => handleAction(userRole === "provider" ? "share-food" : "find-food")}
+                onClick={() => handleAction(userRole === "provider" ? "share-food" : "redeem-credits")}
               >
                 {userRole === "provider" ? "Create Your First Listing" : "Browse Food"}
               </Button>
@@ -412,6 +415,88 @@ const DashboardPage = () => {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsRequestsDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Soil Credits Dialog */}
+      <Dialog open={isSoilCreditsDialogOpen} onOpenChange={setIsSoilCreditsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Soil Credits</DialogTitle>
+            <DialogDescription>
+              {userRole === "provider" 
+                ? "Earn Soil Credits by donating food to your community" 
+                : "Redeem your Soil Credits for fresh produce or meals"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="bg-green-100 p-3 rounded-full">
+                <Leaf className="h-8 w-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">{stats.soilCredits}</h3>
+                <p className="text-gray-600">Soil Credits available</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="font-medium">How Soil Credits Work</h4>
+              <p className="text-sm text-gray-600">
+                Soil Credits are earned by donating food to your community in two ways:
+              </p>
+              <ul className="text-sm text-gray-600 list-disc pl-5 space-y-1">
+                <li><span className="font-medium">Edible Produce:</span> Donate food before it expires to earn 1 Soil Credit</li>
+                <li><span className="font-medium">Recently Expired/Unconsumable:</span> Donate produce that expired within the last 2 days or unconsumable waste to farms/gardens/food banks to earn 1 Soil Credit</li>
+              </ul>
+              <p className="text-sm text-gray-600 mt-2">
+                These credits can be redeemed for free groceries or meals from local partners.
+              </p>
+              
+              {userRole === "provider" ? (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-green-800 mb-2">Earn More Credits</h4>
+                  <p className="text-sm text-gray-700">
+                    Create a new food listing to donate your excess food or recently expired produce and earn Soil Credits.
+                    Each donation earns you 1 Soil Credit that you can use to get free groceries or meals from local partners.
+                  </p>
+                  <Button 
+                    className="mt-4 bg-green-500 hover:bg-green-600"
+                    onClick={() => {
+                      setIsSoilCreditsDialogOpen(false);
+                      handleAction("share-food");
+                    }}
+                  >
+                    Donate Food
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-green-800 mb-2">Redeem Your Credits</h4>
+                  <p className="text-sm text-gray-700">
+                    Use your Soil Credits to get free groceries or meals from local partners.
+                    Each credit can be redeemed for one item from our partner network.
+                  </p>
+                  <Button 
+                    className="mt-4 bg-green-500 hover:bg-green-600"
+                    onClick={() => {
+                      setIsSoilCreditsDialogOpen(false);
+                      navigate("/browse-food");
+                    }}
+                  >
+                    Browse Redemption Options
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSoilCreditsDialogOpen(false)}>
               Close
             </Button>
           </DialogFooter>
