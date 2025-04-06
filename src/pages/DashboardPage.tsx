@@ -2,8 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingBag, Share2, Package, Clock, TrendingUp, Users } from "lucide-react";
+import { ShoppingBag, Share2, Package, Clock, TrendingUp, Users, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -13,9 +23,11 @@ const DashboardPage = () => {
   const [stats, setStats] = useState({
     totalDonationsListed: 0,
     activeDonations: 0,
-    totalDonations: 0,
+    pendingRequests: 0,
     totalConnections: 0
   });
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [isRequestsDialogOpen, setIsRequestsDialogOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -48,11 +60,23 @@ const DashboardPage = () => {
     // Count active donations (status is "Active")
     const activeDonations = donationHistory.filter((donation: any) => donation.status === "Active").length;
     
+    // Get pending requests for the user's listings
+    const userListings = allListings.filter((listing: any) => listing.providerEmail === userEmail);
+    const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
+    
+    // Filter requests for the user's listings that are pending
+    const userPendingRequests = allRequests.filter((request: any) => {
+      const listing = userListings.find((l: any) => l.id === request.listingId);
+      return listing && request.status === "Pending";
+    });
+    
+    setPendingRequests(userPendingRequests);
+    
     // Set stats based on actual data
     setStats({
       totalDonationsListed: donationHistory.length,
       activeDonations: activeDonations,
-      totalDonations: userRole === "provider" ? donationHistory.length : 3,
+      pendingRequests: userPendingRequests.length,
       totalConnections: 8
     });
   }, [navigate, userRole]);
@@ -71,6 +95,35 @@ const DashboardPage = () => {
       default:
         break;
     }
+  };
+
+  const handleRequestAction = (requestId: string, action: "approve" | "reject") => {
+    // Get all requests
+    const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
+    
+    // Find the request to update
+    const requestIndex = allRequests.findIndex((r: any) => r.id === requestId);
+    if (requestIndex === -1) return;
+    
+    // Update the request status
+    allRequests[requestIndex].status = action === "approve" ? "Approved" : "Rejected";
+    allRequests[requestIndex].updatedAt = new Date().toISOString();
+    
+    // Save back to localStorage
+    localStorage.setItem("foodRequests", JSON.stringify(allRequests));
+    
+    // Update the pending requests list
+    const updatedPendingRequests = pendingRequests.filter(r => r.id !== requestId);
+    setPendingRequests(updatedPendingRequests);
+    
+    // Update stats
+    setStats(prev => ({
+      ...prev,
+      pendingRequests: updatedPendingRequests.length
+    }));
+    
+    // Show toast notification
+    toast.success(`Request ${action === "approve" ? "approved" : "rejected"} successfully`);
   };
 
   return (
@@ -182,14 +235,17 @@ const DashboardPage = () => {
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div 
+              className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setIsRequestsDialogOpen(true)}
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Total {userRole === "provider" ? "Donations" : "Received"}</p>
-                  <p className="text-2xl font-bold text-gray-800">{stats.totalDonations}</p>
+                  <p className="text-sm text-gray-500">Pending Requests</p>
+                  <p className="text-2xl font-bold text-gray-800">{stats.pendingRequests}</p>
                 </div>
-                <div className="bg-purple-100 p-2 rounded-full">
-                  <Share2 className="h-5 w-5 text-purple-600" />
+                <div className="bg-amber-100 p-2 rounded-full">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
                 </div>
               </div>
             </div>
@@ -249,6 +305,73 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
+
+      {/* Pending Requests Dialog */}
+      <Dialog open={isRequestsDialogOpen} onOpenChange={setIsRequestsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Pending Requests</DialogTitle>
+            <DialogDescription>
+              Review and manage requests for your food listings
+            </DialogDescription>
+          </DialogHeader>
+          
+          {pendingRequests.length > 0 ? (
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-4">
+                {pendingRequests.map((request) => {
+                  // Find the listing details
+                  const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+                  const listing = allListings.find((l: any) => l.id === request.listingId);
+                  
+                  return (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-medium">{listing?.name || "Food Item"}</h3>
+                        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+                          Pending
+                        </Badge>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-medium">Requested by:</span> {request.requesterName}</p>
+                        <p><span className="font-medium">Contact:</span> {request.requesterEmail}</p>
+                        <p><span className="font-medium">Message:</span> {request.message || "No message provided"}</p>
+                        <p><span className="font-medium">Requested on:</span> {new Date(request.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button 
+                          size="sm" 
+                          className="bg-green-500 hover:bg-green-600"
+                          onClick={() => handleRequestAction(request.id, "approve")}
+                        >
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleRequestAction(request.id, "reject")}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-gray-500">You have no pending requests at the moment.</p>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRequestsDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
