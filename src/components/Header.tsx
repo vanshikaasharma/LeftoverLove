@@ -8,7 +8,6 @@ import {
   LogOut, 
   Menu, 
   X,
-  Search,
   Bell,
   HelpCircle,
   Share2
@@ -87,19 +86,6 @@ const Header = () => {
             >
               <Share2 className="h-4 w-4 mr-1" />
               Share Food
-            </Link>
-            
-            <Link 
-              to="/search" 
-              className={cn(
-                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive("/search") 
-                  ? "bg-green-50 text-green-700" 
-                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
-              )}
-            >
-              <Search className="h-4 w-4 mr-1" />
-              Search
             </Link>
             
             <Link 
@@ -212,22 +198,6 @@ const Header = () => {
               <div className="flex items-center">
                 <Share2 className="h-5 w-5 mr-2" />
                 Share Food
-              </div>
-            </Link>
-            
-            <Link 
-              to="/search" 
-              className={cn(
-                "block px-3 py-2 text-base font-medium",
-                isActive("/search") 
-                  ? "bg-green-50 text-green-700" 
-                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="flex items-center">
-                <Search className="h-5 w-5 mr-2" />
-                Search
               </div>
             </Link>
             
