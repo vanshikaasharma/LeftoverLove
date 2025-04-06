@@ -17,22 +17,116 @@ const Auth = () => {
     // In a real app, this would call an authentication API
     // For demonstration, we're simulating successful auth
     
-    // Store user data in localStorage
-    localStorage.setItem("user", JSON.stringify({
-      name: userData.name || "User",
-      email: userData.email,
-      isAuthenticated: true
-    }));
-    
-    toast({
-      title: isSignUp ? "Account created" : "Welcome back",
-      description: isSignUp 
-        ? "Your account has been created successfully." 
-        : "You have been signed in successfully.",
-    });
-    
-    // Redirect to role selection page
-    navigate("/role-selection");
+    if (isSignUp) {
+      // Check if user already exists
+      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      const existingUser = existingUsers.find((user: any) => user.email === userData.email);
+      
+      if (existingUser) {
+        // User already exists, show error
+        toast({
+          title: "Account already exists",
+          description: "An account with this email already exists. Please sign in instead.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Generate a unique user ID for new accounts
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const joinDate = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      
+      // Store user data in localStorage with the new ID
+      localStorage.setItem("user", JSON.stringify({
+        name: userData.name || "User",
+        email: userData.email,
+        isAuthenticated: true,
+        userId: userId,
+        joinDate: joinDate
+      }));
+      
+      // Add to users list with password (in a real app, this would be hashed)
+      existingUsers.push({
+        name: userData.name || "User",
+        email: userData.email,
+        password: userData.password, // In a real app, this would be hashed
+        userId: userId,
+        joinDate: joinDate
+      });
+      localStorage.setItem("users", JSON.stringify(existingUsers));
+      
+      toast({
+        title: "Account created",
+        description: "Your account has been created successfully.",
+      });
+      
+      // For new sign-ups, redirect to role selection
+      navigate("/role-selection");
+    } else {
+      // For sign in, check if user exists and verify password
+      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      const existingUser = existingUsers.find((user: any) => user.email === userData.email);
+      
+      if (existingUser) {
+        // User exists, check password
+        if (existingUser.password !== userData.password) {
+          // Incorrect password
+          toast({
+            title: "Incorrect password",
+            description: "The password you entered is incorrect. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Password correct, sign in
+        localStorage.setItem("user", JSON.stringify({
+          name: existingUser.name || "User",
+          email: existingUser.email,
+          isAuthenticated: true,
+          userId: existingUser.userId,
+          joinDate: existingUser.joinDate
+        }));
+        
+        toast({
+          title: "Welcome back",
+          description: "You have been signed in successfully.",
+        });
+        
+        // For existing users, redirect to dashboard
+        navigate("/dashboard");
+      } else {
+        // User doesn't exist in our records, create a new ID
+        const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const joinDate = new Date().toISOString().split('T')[0];
+        
+        localStorage.setItem("user", JSON.stringify({
+          name: userData.name || "User",
+          email: userData.email,
+          isAuthenticated: true,
+          userId: userId,
+          joinDate: joinDate
+        }));
+        
+        // Add to users list
+        existingUsers.push({
+          name: userData.name || "User",
+          email: userData.email,
+          password: userData.password, // In a real app, this would be hashed
+          userId: userId,
+          joinDate: joinDate
+        });
+        localStorage.setItem("users", JSON.stringify(existingUsers));
+        
+        toast({
+          title: "Account created",
+          description: "Your account has been created successfully.",
+        });
+        
+        // For new users created during sign-in, redirect to role selection
+        navigate("/role-selection");
+      }
+    }
   };
 
   return (
