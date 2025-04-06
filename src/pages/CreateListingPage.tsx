@@ -10,6 +10,7 @@ interface FoodItemData {
   category: string;
   quantity: string;
   expireDate: Date | undefined;
+  isExpired: boolean;
   company: string;
   listingType: "donate" | "sell";
   price: string;
@@ -32,6 +33,7 @@ const CreateListingPage = () => {
       ...foodItem,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
+      status: "Active",
     };
     listings.push(newListing);
     localStorage.setItem("foodListings", JSON.stringify(listings));
@@ -45,9 +47,10 @@ const CreateListingPage = () => {
         date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
         item: foodItem.name,
         quantity: foodItem.quantity,
-        status: "Active",
+        status: foodItem.isExpired ? "Expired" : "Active",
         listingType: foodItem.listingType,
-        category: foodItem.category
+        category: foodItem.category,
+        isExpired: foodItem.isExpired
       });
       localStorage.setItem(`donationHistory_${userEmail}`, JSON.stringify(donationHistory));
     }

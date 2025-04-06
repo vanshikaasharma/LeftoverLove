@@ -35,7 +35,7 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("userRole");
-    navigate("/auth");
+    navigate("/");
   };
 
   const handleHomeClick = (e: React.MouseEvent) => {

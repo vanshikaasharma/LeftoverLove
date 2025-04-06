@@ -142,7 +142,7 @@ const ProfilePage = () => {
                   <Key size={16} /> ID: <Badge variant="outline" className="ml-1 font-mono text-xs">{userData.userId || "Not assigned"}</Badge>
                 </div>
                 <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
-                  {userRole === "consumer" ? "Food Receiver" : "Food Provider"}
+                  {userRole === "consumer" ? "Community Member" : "Food Provider"}
                 </div>
               </CardDescription>
             </CardHeader>

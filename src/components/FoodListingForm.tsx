@@ -19,6 +19,7 @@ interface FoodItemData {
   category: string;
   quantity: string;
   expireDate: Date | undefined;
+  isExpired: boolean;
   company: string;
   listingType: "donate" | "sell";
   price: string;
@@ -39,6 +40,7 @@ const FoodListingForm = ({ onSubmit }: FoodListingFormProps) => {
     category: "",
     quantity: "",
     expireDate: undefined,
+    isExpired: false,
     company: "",
     listingType: "donate",
     price: "",
@@ -248,33 +250,35 @@ const FoodListingForm = ({ onSubmit }: FoodListingFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expireDate">Expiration Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !foodItem.expireDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {foodItem.expireDate ? (
-                      format(foodItem.expireDate, "PPP")
-                    ) : (
-                      <span>Select expiration date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={foodItem.expireDate}
-                    onSelect={handleDateChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="expireDate">Expiration Date (Optional for produce)</Label>
+              <div className="flex flex-col gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !foodItem.expireDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {foodItem.expireDate ? (
+                        format(foodItem.expireDate, "PPP")
+                      ) : (
+                        <span>Select expiration date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={foodItem.expireDate}
+                      onSelect={handleDateChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-2">

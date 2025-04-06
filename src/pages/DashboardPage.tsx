@@ -59,8 +59,17 @@ const DashboardPage = () => {
     const userEmail = userData.email;
     const donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${userEmail}`) || "[]");
     
+    // Calculate soil credits (1 credit per donation)
+    // This includes both edible donations and recently expired/unconsumable waste
+    const soilCredits = donationHistory.length;
+    
     // Count active donations (status is "Active")
     const activeDonations = donationHistory.filter((donation: any) => donation.status === "Active").length;
+    
+    // Count expired donations
+    const expiredDonations = donationHistory.filter((donation: any) => 
+      donation.status === "Expired" || donation.isExpired === true
+    ).length;
     
     // Get pending requests for the user's listings
     const userListings = allListings.filter((listing: any) => listing.providerEmail === userEmail);
@@ -79,10 +88,6 @@ const DashboardPage = () => {
     });
     
     setPendingRequests(userPendingRequests);
-    
-    // Calculate soil credits (1 credit per donation)
-    // This includes both edible donations and recently expired/unconsumable waste
-    const soilCredits = donationHistory.length;
     
     // Set stats based on actual data
     setStats({
@@ -141,6 +146,38 @@ const DashboardPage = () => {
       localStorage.setItem(`purchaseHistory_${requesterEmail}`, JSON.stringify(purchaseHistory));
     }
     
+    // If the request is approved, update the food listing status to "Completed"
+    if (action === "approve") {
+      // Get all food listings
+      const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+      
+      // Find the listing to update
+      const listingIndex = allListings.findIndex((l: any) => l.id === request.listingId);
+      if (listingIndex !== -1) {
+        // Update the listing status
+        allListings[listingIndex].status = "Completed";
+        
+        // Save back to localStorage
+        localStorage.setItem("foodListings", JSON.stringify(allListings));
+        
+        // Update the provider's donation history
+        const providerEmail = request.providerEmail;
+        if (providerEmail) {
+          const donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${providerEmail}`) || "[]");
+          
+          // Find the donation history entry with the matching listingId
+          const donationIndex = donationHistory.findIndex((d: any) => d.id === request.listingId);
+          if (donationIndex !== -1) {
+            // Update the status
+            donationHistory[donationIndex].status = "Completed";
+            
+            // Save back to localStorage
+            localStorage.setItem(`donationHistory_${providerEmail}`, JSON.stringify(donationHistory));
+          }
+        }
+      }
+    }
+    
     // Update the pending requests list
     const updatedPendingRequests = pendingRequests.filter(r => r.id !== requestId);
     setPendingRequests(updatedPendingRequests);
@@ -175,44 +212,6 @@ const DashboardPage = () => {
           <Card className="border-2 hover:border-green-500 transition-colors">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {userRole === "provider" ? (
-                  <>
-                    <Share2 className="text-green-500" />
-                    Share More Food
-                  </>
-                ) : (
-                  <>
-                    <Leaf className="text-green-500" />
-                    Soil Credits
-                  </>
-                )}
-              </CardTitle>
-              <CardDescription>
-                {userRole === "provider" 
-                  ? "List your excess food to help those in need and earn Soil Credits" 
-                  : "View and redeem your Soil Credits for fresh produce or meals"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                {userRole === "provider" 
-                  ? "Create a new listing to share your surplus food with the community and earn Soil Credits." 
-                  : "Use your Soil Credits to get fresh produce or meals from community partners."}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                className="w-full bg-green-500 hover:bg-green-600"
-                onClick={() => handleAction(userRole === "provider" ? "share-food" : "redeem-credits")}
-              >
-                {userRole === "provider" ? "Create New Listing" : "Redeem Credits"}
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          <Card className="border-2 hover:border-green-500 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <Users className="text-green-500" />
                 Your Profile
               </CardTitle>
@@ -231,6 +230,54 @@ const DashboardPage = () => {
                 onClick={() => handleAction("view-profile")}
               >
                 Go to Profile
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card className="border-2 hover:border-green-500 transition-colors">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Share2 className="text-green-500" />
+                Food Actions
+              </CardTitle>
+              <CardDescription>
+                Find or share food with the community
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="h-5 w-5 text-green-500" />
+                  <div>
+                    <h4 className="font-medium">Find Food</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Browse available food listings from local providers
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Share2 className="h-5 w-5 text-green-500" />
+                  <div>
+                    <h4 className="font-medium">Share Food</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Create a listing to share your excess food with others
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-2">
+              <Button 
+                className="w-full bg-green-500 hover:bg-green-600"
+                onClick={() => navigate("/browse-food")}
+              >
+                Find Food
+              </Button>
+              <Button 
+                className="w-full bg-white text-green-700 border border-green-700 hover:bg-green-50"
+                onClick={() => navigate("/create-listing")}
+              >
+                Share Food
               </Button>
             </CardFooter>
           </Card>
@@ -456,6 +503,14 @@ const DashboardPage = () => {
               <p className="text-sm text-gray-600 mt-2">
                 These credits can be redeemed for free groceries or meals from local partners.
               </p>
+              
+              {userRole === "provider" && (
+                <div className="bg-amber-50 p-3 rounded-lg mt-2">
+                  <p className="text-sm text-amber-800">
+                    <span className="font-medium">Note:</span> For produce items without expiration dates, you can mark them as "expired" if they are no longer fresh or will expire soon.
+                  </p>
+                </div>
+              )}
               
               {userRole === "provider" ? (
                 <div className="bg-green-50 p-4 rounded-lg">

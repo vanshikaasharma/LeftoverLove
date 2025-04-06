@@ -497,18 +497,13 @@ const BrowseFoodPage = () => {
                       {listing.type}
                     </span>
                   </div>
-                  <CardDescription className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {listing.distance} away · {listing.provider}
+                  <CardDescription className="flex items-center gap-2 text-sm text-gray-500">
+                    <MapPin className="h-4 w-4" />
+                    <span>{listing.location || "Not specified"}</span>
                   </CardDescription>
                   {listing.category && (
                     <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
                       {listing.category}
-                    </Badge>
-                  )}
-                  {listing.location && (
-                    <Badge variant="outline" className="mt-2 bg-purple-50 text-purple-700 border-purple-200">
-                      {listing.location}
                     </Badge>
                   )}
                 </CardHeader>
