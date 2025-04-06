@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -85,13 +86,6 @@ export default {
 					700: '#655223',
 					800: '#443718',
 					900: '#2D240F',
-				},
-				leftover: {
-					gold: '#F6BD60',
-					cream: '#F7EDE2',
-					pink: '#F5CAC3',
-					teal: '#84A59D',
-					coral: '#F28482',
 				},
 			},
 			borderRadius: {
