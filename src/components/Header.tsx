@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   Home, 
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -25,10 +26,23 @@ const Header = () => {
   const userData = JSON.parse(localStorage.getItem("user") || "{}");
   const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
   
+  useEffect(() => {
+    // Check if user is authenticated
+    const user = localStorage.getItem("user");
+    setIsAuthenticated(user && JSON.parse(user).isAuthenticated);
+  }, []);
+  
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("userRole");
     navigate("/auth");
+  };
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      navigate("/dashboard");
+    }
   };
 
   const isActive = (path: string) => {
@@ -40,7 +54,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center" onClick={handleHomeClick}>
               <span className="text-green-600 font-bold text-xl">Leftover Love</span>
             </Link>
           </div>
@@ -51,10 +65,11 @@ const Header = () => {
               to="/" 
               className={cn(
                 "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive("/") 
+                isActive("/") || isActive("/dashboard")
                   ? "bg-green-50 text-green-700" 
                   : "text-gray-700 hover:text-green-600 hover:bg-green-50"
               )}
+              onClick={handleHomeClick}
             >
               <Home className="h-4 w-4 mr-1" />
               Home
@@ -155,11 +170,14 @@ const Header = () => {
               to="/" 
               className={cn(
                 "block px-3 py-2 text-base font-medium",
-                isActive("/") 
+                isActive("/") || isActive("/dashboard")
                   ? "bg-green-50 text-green-700" 
                   : "text-gray-700 hover:bg-green-50 hover:text-green-600"
               )}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => {
+                handleHomeClick(e);
+                setMobileMenuOpen(false);
+              }}
             >
               <div className="flex items-center">
                 <Home className="h-5 w-5 mr-2" />
