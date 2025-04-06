@@ -32,13 +32,20 @@ const DashboardPage = () => {
     
     // Load recent listings from localStorage
     const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
-    setRecentListings(allListings.slice(0, 3)); // Get the 3 most recent listings
     
-    // Set mock stats
+    // Sort listings by creation date (newest first)
+    const sortedListings = [...allListings].sort((a, b) => {
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    });
+    
+    // Get the 3 most recent listings
+    setRecentListings(sortedListings.slice(0, 3));
+    
+    // Set stats based on actual data
     setStats({
       totalListings: allListings.length,
-      activeListings: allListings.filter((listing: any) => listing.status === "Available").length,
-      totalDonations: userRole === "provider" ? 5 : 3,
+      activeListings: allListings.filter((listing: any) => !listing.isClaimed).length,
+      totalDonations: userRole === "provider" ? allListings.length : 3,
       totalConnections: 8
     });
   }, [navigate, userRole]);
@@ -207,9 +214,9 @@ const DashboardPage = () => {
                   onClick={() => navigate(`/food-listing/${listing.id}`)}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-800 hover:text-green-700 hover:underline">{listing.item}</h3>
-                    <Badge className={listing.status === "Available" ? "bg-green-500" : "bg-gray-500"}>
-                      {listing.status}
+                    <h3 className="font-medium text-gray-800 hover:text-green-700 hover:underline">{listing.name}</h3>
+                    <Badge className={listing.listingType === "donate" ? "bg-green-500" : "bg-blue-500"}>
+                      {listing.listingType === "donate" ? "Free" : "Reduced Price"}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">Quantity: {listing.quantity}</p>
