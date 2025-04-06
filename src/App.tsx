@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import RoleSelectionPage from "./pages/RoleSelectionPage";
 import CreateListingPage from "./pages/CreateListingPage";
 import BrowseFoodPage from "./pages/BrowseFoodPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/role-selection" element={<RoleSelectionPage />} />
           <Route path="/create-listing" element={<CreateListingPage />} />
           <Route path="/browse-food" element={<BrowseFoodPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
