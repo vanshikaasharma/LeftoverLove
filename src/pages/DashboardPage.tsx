@@ -201,9 +201,13 @@ const DashboardPage = () => {
           {recentListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {recentListings.map((listing, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div 
+                  key={index} 
+                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => navigate(`/food-listing/${listing.id}`)}
+                >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-800">{listing.item}</h3>
+                    <h3 className="font-medium text-gray-800 hover:text-green-700 hover:underline">{listing.item}</h3>
                     <Badge className={listing.status === "Available" ? "bg-green-500" : "bg-gray-500"}>
                       {listing.status}
                     </Badge>

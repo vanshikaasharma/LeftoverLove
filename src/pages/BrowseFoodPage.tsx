@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,7 @@ const FOOD_LISTINGS = [
 ];
 
 const BrowseFoodPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [radius, setRadius] = useState([5]); // Default 5 miles radius
@@ -156,7 +157,11 @@ const BrowseFoodPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredListings.length > 0 ? (
             filteredListings.map((listing) => (
-              <Card key={listing.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card 
+                key={listing.id} 
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/food-listing/${listing.id}`)}
+              >
                 <div className="h-48 overflow-hidden">
                   <img 
                     src={listing.image} 
@@ -166,7 +171,7 @@ const BrowseFoodPage = () => {
                 </div>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl">{listing.name}</CardTitle>
+                    <CardTitle className="text-xl text-green-700 hover:underline">{listing.name}</CardTitle>
                     <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
                       {listing.type}
                     </span>
@@ -180,7 +185,13 @@ const BrowseFoodPage = () => {
                   <p className="text-gray-600">{listing.description}</p>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full bg-earth-500 hover:bg-earth-600">
+                  <Button 
+                    className="w-full bg-earth-500 hover:bg-earth-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle request food action
+                    }}
+                  >
                     Request Food
                   </Button>
                 </CardFooter>

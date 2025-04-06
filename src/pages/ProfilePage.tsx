@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const userRole = localStorage.getItem("userRole") || "consumer";
@@ -26,6 +27,7 @@ const ProfilePage = () => {
     localStorage.getItem("notificationsEnabled") === "true"
   );
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Generate a unique user ID if not already present
   useEffect(() => {
@@ -237,9 +239,15 @@ const ProfilePage = () => {
                       <TableBody>
                         {donationHistory.length > 0 ? (
                           donationHistory.map((item) => (
-                            <TableRow key={item.id}>
+                            <TableRow 
+                              key={item.id}
+                              className="cursor-pointer hover:bg-green-50 transition-colors"
+                              onClick={() => navigate(`/food-listing/${item.id}`)}
+                            >
                               <TableCell>{item.date}</TableCell>
-                              <TableCell>{item.item}</TableCell>
+                              <TableCell className="font-medium text-green-700 hover:underline">
+                                {item.item}
+                              </TableCell>
                               <TableCell>{item.quantity}</TableCell>
                               <TableCell>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
