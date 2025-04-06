@@ -39,7 +39,8 @@ const DashboardPage = () => {
       return;
     }
     
-    setUserData(JSON.parse(user));
+    const userData = JSON.parse(user);
+    setUserData(userData);
     setUserRole(role || "consumer");
     
     // Load recent listings from localStorage
@@ -54,7 +55,7 @@ const DashboardPage = () => {
     setRecentListings(sortedListings.slice(0, 3));
     
     // Get user's donation history
-    const userEmail = JSON.parse(user).email;
+    const userEmail = userData.email;
     const donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${userEmail}`) || "[]");
     
     // Count active donations (status is "Active")
@@ -65,9 +66,15 @@ const DashboardPage = () => {
     const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
     
     // Filter requests for the user's listings that are pending
+    // This includes requests where the user is the provider (either by email or userId)
     const userPendingRequests = allRequests.filter((request: any) => {
+      // Check if the request is for one of the user's listings
       const listing = userListings.find((l: any) => l.id === request.listingId);
-      return listing && request.status === "Pending";
+      
+      // Also check if the request has the user's ID as the provider
+      const isProviderById = request.providerId === userData.id;
+      
+      return (listing || isProviderById) && request.status === "Pending";
     });
     
     setPendingRequests(userPendingRequests);
@@ -79,7 +86,7 @@ const DashboardPage = () => {
       pendingRequests: userPendingRequests.length,
       totalConnections: 8
     });
-  }, [navigate, userRole]);
+  }, [navigate]);
 
   const handleAction = (action: string) => {
     switch (action) {
@@ -111,6 +118,44 @@ const DashboardPage = () => {
     
     // Save back to localStorage
     localStorage.setItem("foodRequests", JSON.stringify(allRequests));
+    
+    // If the request is approved, add it to the requester's purchase history
+    if (action === "approve") {
+      const request = allRequests[requestIndex];
+      
+      // Get the listing details
+      const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+      const listing = allListings.find((l: any) => l.id === request.listingId);
+      
+      if (listing) {
+        // Get the requester's purchase history
+        const requesterEmail = request.requesterEmail;
+        const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${requesterEmail}`) || "[]");
+        
+        // Create a new purchase record
+        const newPurchase = {
+          id: `purchase_${Date.now()}`,
+          listingId: listing.id,
+          listingName: listing.name,
+          quantity: listing.quantity,
+          price: listing.listingType === "donate" ? "Free" : listing.price,
+          status: "Completed",
+          purchaseDate: new Date().toISOString(),
+          providerName: listing.providerName || "Food Provider",
+          providerEmail: listing.providerEmail,
+          category: listing.category
+        };
+        
+        // Add to purchase history
+        purchaseHistory.push(newPurchase);
+        
+        // Save back to localStorage
+        localStorage.setItem(`purchaseHistory_${requesterEmail}`, JSON.stringify(purchaseHistory));
+        
+        // Show toast notification to the requester (in a real app, this would be a push notification)
+        toast.success(`Your request for "${listing.name}" has been approved!`);
+      }
+    }
     
     // Update the pending requests list
     const updatedPendingRequests = pendingRequests.filter(r => r.id !== requestId);
@@ -327,7 +372,7 @@ const DashboardPage = () => {
                   return (
                     <div key={request.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium">{listing?.name || "Food Item"}</h3>
+                        <h3 className="font-medium">{listing?.name || request.listingName || "Food Item"}</h3>
                         <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
                           Pending
                         </Badge>

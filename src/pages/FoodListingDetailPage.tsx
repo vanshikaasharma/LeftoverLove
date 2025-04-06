@@ -35,6 +35,7 @@ interface FoodListing {
   image?: string;
   createdAt: string;
   userId: string;
+  userName?: string;
 }
 
 const FoodListingDetailPage = () => {
@@ -129,6 +130,7 @@ const FoodListingDetailPage = () => {
       requesterName: userName,
       requesterEmail: userEmail,
       providerEmail: listing.contactEmail,
+      providerId: listing.userId,
       message: requestMessage,
       status: "Pending",
       createdAt: new Date().toISOString(),
@@ -143,6 +145,29 @@ const FoodListingDetailPage = () => {
     
     // Save back to localStorage
     localStorage.setItem("foodRequests", JSON.stringify(allRequests));
+    
+    // Add to user's purchase history with "Pending" status
+    const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userEmail}`) || "[]");
+    
+    // Create a new purchase record with "Pending" status
+    const newPurchase = {
+      id: `purchase_${Date.now()}`,
+      listingId: listing.id,
+      listingName: listing.name,
+      quantity: listing.quantity,
+      price: listing.listingType === "donate" ? "Free" : listing.price,
+      status: "Pending",
+      purchaseDate: new Date().toISOString(),
+      providerName: listing.userName || "Food Provider",
+      providerEmail: listing.contactEmail,
+      category: listing.category
+    };
+    
+    // Add to purchase history
+    purchaseHistory.push(newPurchase);
+    
+    // Save back to localStorage
+    localStorage.setItem(`purchaseHistory_${userEmail}`, JSON.stringify(purchaseHistory));
     
     // Update request status
     setRequestStatus("pending");
