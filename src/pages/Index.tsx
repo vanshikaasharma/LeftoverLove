@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ const Index = () => {
               Connecting Food Resources with Those Who Need Them
             </h1>
             <p className="text-white text-lg mb-8">
-              FoodShare Connect helps reduce food waste and fight hunger by connecting food donors with individuals and families facing food insecurity.
+              Leftover Love helps reduce food waste and fight hunger by connecting food donors with individuals and families facing food insecurity.
             </p>
             <Button 
               className="bg-white text-green-600 hover:bg-gray-100 text-lg px-6 py-6 h-auto rounded-full"
@@ -108,8 +107,8 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between">
             <div className="mb-6 md:mb-0">
-              <h2 className="text-2xl font-bold mb-2">FoodShare Connect</h2>
-              <p className="text-gray-400">Reducing food waste, fighting hunger</p>
+              <h2 className="text-2xl font-bold mb-2">Leftover Love</h2>
+              <p className="text-gray-400">Connecting food resources with those who need them most</p>
             </div>
             
             <div className="grid grid-cols-2 gap-8">
@@ -133,7 +132,7 @@ const Index = () => {
           </div>
           
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} FoodShare Connect. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Leftover Love. All rights reserved.</p>
           </div>
         </div>
       </footer>

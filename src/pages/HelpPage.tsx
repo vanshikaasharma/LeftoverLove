@@ -18,7 +18,7 @@ const HelpPage = () => {
         
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Help Center</h1>
-          <p className="text-gray-600">Support and assistance for FoodShare Connect users</p>
+          <p className="text-gray-600">Support and assistance for Leftover Love users</p>
         </div>
         
         <Alert className="mb-8 border-yellow-500 bg-yellow-50">

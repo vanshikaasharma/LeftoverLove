@@ -10,7 +10,8 @@ import {
   X,
   Search,
   Bell,
-  HelpCircle
+  HelpCircle,
+  Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +42,7 @@ const Header = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-green-600 font-bold text-xl">FoodShare Connect</span>
+              <span className="text-green-600 font-bold text-xl">Leftover Love</span>
             </Link>
           </div>
           
@@ -73,20 +74,20 @@ const Header = () => {
                 <ShoppingBag className="h-4 w-4 mr-1" />
                 Find Food
               </Link>
-            ) : (
-              <Link 
-                to="/create-listing" 
-                className={cn(
-                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  isActive("/create-listing") 
-                    ? "bg-green-50 text-green-700" 
-                    : "text-gray-700 hover:text-green-600 hover:bg-green-50"
-                )}
-              >
-                <Package className="h-4 w-4 mr-1" />
-                Share Food
-              </Link>
-            )}
+            ) : null}
+            
+            <Link 
+              to="/create-listing" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/create-listing") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+              )}
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              Share Food
+            </Link>
             
             <Link 
               to="/search" 
@@ -196,23 +197,23 @@ const Header = () => {
                   Find Food
                 </div>
               </Link>
-            ) : (
-              <Link 
-                to="/create-listing" 
-                className={cn(
-                  "block px-3 py-2 text-base font-medium",
-                  isActive("/create-listing") 
-                    ? "bg-green-50 text-green-700" 
-                    : "text-gray-700 hover:bg-green-50 hover:text-green-600"
-                )}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="flex items-center">
-                  <Package className="h-5 w-5 mr-2" />
-                  Share Food
-                </div>
-              </Link>
-            )}
+            ) : null}
+            
+            <Link 
+              to="/create-listing" 
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/create-listing") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+              )}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center">
+                <Share2 className="h-5 w-5 mr-2" />
+                Share Food
+              </div>
+            </Link>
             
             <Link 
               to="/search" 
