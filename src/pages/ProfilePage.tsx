@@ -10,16 +10,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const ProfilePage = () => {
   const userRole = localStorage.getItem("userRole") || "consumer";
   const [userData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    joinDate: "April 2, 2025"
+    name: "Taylor Swift",
+    email: "Taylor.swift@erasTour.com",
+    joinDate: "April 5, 2025"
   });
 
   // Mock data for purchase/donation history
   const mockHistory = [
-    { id: 1, date: "2025-04-05", item: "Bread", quantity: 2, status: "Completed" },
+    { id: 1, date: "2025-04-05", item: "Brioche breadBread", quantity: 2, status: "Completed" },
     { id: 2, date: "2025-04-03", item: "Vegetables", quantity: 5, status: "Completed" },
     { id: 3, date: "2025-03-28", item: "Canned Goods", quantity: 10, status: "Completed" },
+    { id: 3, date: "2025-03-28", item: "Canned Goods", quantity: 10, status: "Completed" }
   ];
 
   return (
