@@ -53,11 +53,6 @@ const Header = () => {
               </Link>
             )}
             
-            <Link to="/profile" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
-              <User className="h-4 w-4 mr-1" />
-              My Account
-            </Link>
-            
             <Button variant="ghost" className="inline-flex items-center" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-1" />
               Sign Out
@@ -116,17 +111,6 @@ const Header = () => {
                 </div>
               </Link>
             )}
-            
-            <Link 
-              to="/profile" 
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                My Account
-              </div>
-            </Link>
             
             <button 
               className="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
