@@ -15,12 +15,8 @@ const RoleSelectionPage = () => {
     if (role === "provider") {
       navigate("/create-listing");
     } else {
-      // In a real app, this would go to a page to browse food listings
-      // For now, let's show a toast message
-      toast({
-        title: "Feature coming soon",
-        description: "The food browsing feature is under development.",
-      });
+      // Navigate to the browse food page
+      navigate("/browse-food");
     }
   };
 
