@@ -25,26 +25,26 @@ const ProfilePage = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4 bg-leftover-cream/30">
         <div className="flex flex-col md:flex-row gap-8">
           {/* User Profile Card */}
-          <Card className="md:w-1/3">
-            <CardHeader className="flex flex-col items-center">
-              <Avatar className="h-24 w-24 mb-4">
+          <Card className="md:w-1/3 border-leftover-teal/30 shadow-md">
+            <CardHeader className="flex flex-col items-center bg-gradient-to-br from-leftover-cream to-leftover-pink/30 rounded-t-lg">
+              <Avatar className="h-24 w-24 mb-4 border-2 border-leftover-gold">
                 <AvatarImage src="" alt={userData.name} />
-                <AvatarFallback className="text-2xl bg-green-100 text-green-800">
+                <AvatarFallback className="text-2xl bg-leftover-teal text-white">
                   {userData.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              <CardTitle className="text-2xl font-bold">{userData.name}</CardTitle>
+              <CardTitle className="text-2xl font-bold text-leftover-teal">{userData.name}</CardTitle>
               <CardDescription className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="flex items-center justify-center gap-2 mb-1 text-gray-600">
                   <User size={16} /> {userData.email}
                 </div>
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2 text-gray-600">
                   <History size={16} /> Member since {userData.joinDate}
                 </div>
-                <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
+                <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-leftover-gold/20 text-leftover-teal border border-leftover-gold/30">
                   {userRole === "consumer" ? "Food Receiver" : "Food Provider"}
                 </div>
               </CardDescription>
@@ -54,8 +54,8 @@ const ProfilePage = () => {
           {/* Activity Tabs */}
           <div className="flex-1">
             <Tabs defaultValue="history">
-              <TabsList className="w-full">
-                <TabsTrigger value="history" className="flex-1">
+              <TabsList className="w-full bg-leftover-cream border border-leftover-teal/20">
+                <TabsTrigger value="history" className="flex-1 data-[state=active]:bg-leftover-teal data-[state=active]:text-white">
                   {userRole === "consumer" ? (
                     <div className="flex items-center gap-2">
                       <ShoppingBag className="h-4 w-4" />
@@ -68,13 +68,13 @@ const ProfilePage = () => {
                     </div>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex-1">Account Settings</TabsTrigger>
+                <TabsTrigger value="settings" className="flex-1 data-[state=active]:bg-leftover-teal data-[state=active]:text-white">Account Settings</TabsTrigger>
               </TabsList>
               
               <TabsContent value="history" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
+                <Card className="border-leftover-teal/30 shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-leftover-cream to-leftover-pink/30 rounded-t-lg">
+                    <CardTitle className="text-leftover-teal">
                       {userRole === "consumer" ? "Your Purchase History" : "Your Donation History"}
                     </CardTitle>
                     <CardDescription>
@@ -83,7 +83,7 @@ const ProfilePage = () => {
                   </CardHeader>
                   <CardContent>
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="bg-leftover-cream/50">
                         <TableRow>
                           <TableHead>Date</TableHead>
                           <TableHead>Item</TableHead>
@@ -94,12 +94,12 @@ const ProfilePage = () => {
                       <TableBody>
                         {mockHistory.length > 0 ? (
                           mockHistory.map((item) => (
-                            <TableRow key={item.id}>
+                            <TableRow key={item.id} className="hover:bg-leftover-pink/10 transition-colors">
                               <TableCell>{item.date}</TableCell>
                               <TableCell>{item.item}</TableCell>
                               <TableCell>{item.quantity}</TableCell>
                               <TableCell>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-leftover-teal/20 text-leftover-teal border border-leftover-teal/30">
                                   {item.status}
                                 </span>
                               </TableCell>
@@ -119,9 +119,9 @@ const ProfilePage = () => {
               </TabsContent>
               
               <TabsContent value="settings" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Account Settings</CardTitle>
+                <Card className="border-leftover-teal/30 shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-leftover-cream to-leftover-pink/30 rounded-t-lg">
+                    <CardTitle className="text-leftover-teal">Account Settings</CardTitle>
                     <CardDescription>
                       Manage your account details and preferences
                     </CardDescription>

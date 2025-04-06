@@ -25,40 +25,40 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-10">
+    <header className="bg-leftover-cream shadow-sm sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-green-600 font-bold text-xl">FoodShare Connect</span>
+              <span className="text-leftover-teal font-bold text-xl">Leftover Love</span>
             </Link>
           </div>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
-            <Link to="/" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+            <Link to="/" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-leftover-coral">
               <Home className="h-4 w-4 mr-1" />
               Home
             </Link>
             
             {userRole === "consumer" ? (
-              <Link to="/browse-food" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+              <Link to="/browse-food" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-leftover-coral">
                 <ShoppingBag className="h-4 w-4 mr-1" />
                 Find Food
               </Link>
             ) : (
-              <Link to="/create-listing" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+              <Link to="/create-listing" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-leftover-coral">
                 <Package className="h-4 w-4 mr-1" />
                 Share Food
               </Link>
             )}
             
-            <Link to="/profile" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+            <Link to="/profile" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-leftover-coral">
               <User className="h-4 w-4 mr-1" />
               My Account
             </Link>
             
-            <Button variant="ghost" className="inline-flex items-center" onClick={handleLogout}>
+            <Button variant="ghost" className="inline-flex items-center hover:text-leftover-coral" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-1" />
               Sign Out
             </Button>
@@ -80,11 +80,11 @@ const Header = () => {
       
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg">
+        <div className="md:hidden bg-leftover-cream shadow-lg">
           <div className="pt-2 pb-3 space-y-1">
             <Link 
               to="/" 
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-leftover-pink/20 hover:text-leftover-coral"
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="flex items-center">
@@ -96,7 +96,7 @@ const Header = () => {
             {userRole === "consumer" ? (
               <Link 
                 to="/browse-food" 
-                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-leftover-pink/20 hover:text-leftover-coral"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="flex items-center">
@@ -107,7 +107,7 @@ const Header = () => {
             ) : (
               <Link 
                 to="/create-listing" 
-                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-leftover-pink/20 hover:text-leftover-coral"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="flex items-center">
@@ -119,7 +119,7 @@ const Header = () => {
             
             <Link 
               to="/profile" 
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-leftover-pink/20 hover:text-leftover-coral"
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="flex items-center">
@@ -129,7 +129,7 @@ const Header = () => {
             </Link>
             
             <button 
-              className="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+              className="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:bg-leftover-pink/20 hover:text-leftover-coral"
               onClick={() => {
                 handleLogout();
                 setMobileMenuOpen(false);
