@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   Home, 
   ShoppingBag, 
@@ -8,20 +7,32 @@ import {
   User, 
   LogOut, 
   Menu, 
-  X 
+  X,
+  Search,
+  Bell,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   const userRole = localStorage.getItem("userRole") || "consumer";
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
   
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("userRole");
     navigate("/auth");
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
@@ -35,30 +46,101 @@ const Header = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
-            <Link to="/" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+          <nav className="hidden md:flex items-center space-x-1">
+            <Link 
+              to="/" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+              )}
+            >
               <Home className="h-4 w-4 mr-1" />
               Home
             </Link>
             
             {userRole === "consumer" ? (
-              <Link to="/browse-food" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+              <Link 
+                to="/browse-food" 
+                className={cn(
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  isActive("/browse-food") 
+                    ? "bg-green-50 text-green-700" 
+                    : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+                )}
+              >
                 <ShoppingBag className="h-4 w-4 mr-1" />
                 Find Food
               </Link>
             ) : (
-              <Link to="/create-listing" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+              <Link 
+                to="/create-listing" 
+                className={cn(
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  isActive("/create-listing") 
+                    ? "bg-green-50 text-green-700" 
+                    : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+                )}
+              >
                 <Package className="h-4 w-4 mr-1" />
                 Share Food
               </Link>
             )}
             
-            <Link to="/profile" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600">
+            <Link 
+              to="/search" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/search") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+              )}
+            >
+              <Search className="h-4 w-4 mr-1" />
+              Search
+            </Link>
+            
+            <Link 
+              to="/help" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/help") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+              )}
+            >
+              <HelpCircle className="h-4 w-4 mr-1" />
+              Help
+            </Link>
+            
+            <Link 
+              to="/profile" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/profile") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+              )}
+            >
               <User className="h-4 w-4 mr-1" />
               My Account
             </Link>
             
-            <Button variant="ghost" className="inline-flex items-center" onClick={handleLogout}>
+            {notificationsEnabled && (
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500">
+                  2
+                </Badge>
+              </Button>
+            )}
+            
+            <Button 
+              variant="ghost" 
+              className="inline-flex items-center text-gray-700 hover:text-green-600 hover:bg-green-50" 
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4 mr-1" />
               Sign Out
             </Button>
@@ -84,7 +166,12 @@ const Header = () => {
           <div className="pt-2 pb-3 space-y-1">
             <Link 
               to="/" 
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+              )}
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="flex items-center">
@@ -96,7 +183,12 @@ const Header = () => {
             {userRole === "consumer" ? (
               <Link 
                 to="/browse-food" 
-                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+                className={cn(
+                  "block px-3 py-2 text-base font-medium",
+                  isActive("/browse-food") 
+                    ? "bg-green-50 text-green-700" 
+                    : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+                )}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="flex items-center">
@@ -107,7 +199,12 @@ const Header = () => {
             ) : (
               <Link 
                 to="/create-listing" 
-                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+                className={cn(
+                  "block px-3 py-2 text-base font-medium",
+                  isActive("/create-listing") 
+                    ? "bg-green-50 text-green-700" 
+                    : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+                )}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="flex items-center">
@@ -118,8 +215,45 @@ const Header = () => {
             )}
             
             <Link 
+              to="/search" 
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/search") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+              )}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center">
+                <Search className="h-5 w-5 mr-2" />
+                Search
+              </div>
+            </Link>
+            
+            <Link 
+              to="/help" 
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/help") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+              )}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center">
+                <HelpCircle className="h-5 w-5 mr-2" />
+                Help
+              </div>
+            </Link>
+            
+            <Link 
               to="/profile" 
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/profile") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+              )}
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="flex items-center">
@@ -127,6 +261,18 @@ const Header = () => {
                 My Account
               </div>
             </Link>
+            
+            {notificationsEnabled && (
+              <div className="px-3 py-2 text-base font-medium text-gray-700">
+                <div className="flex items-center">
+                  <Bell className="h-5 w-5 mr-2" />
+                  Notifications
+                  <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
+                    2
+                  </Badge>
+                </div>
+              </div>
+            )}
             
             <button 
               className="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
