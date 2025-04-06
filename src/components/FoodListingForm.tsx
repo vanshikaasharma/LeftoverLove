@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Upload, X, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -20,12 +19,14 @@ interface FoodItemData {
   category: string;
   quantity: string;
   expireDate: Date | undefined;
+  isExpired: boolean;
   company: string;
   listingType: "donate" | "sell";
   price: string;
   location: string;
   contactPhone: string;
   contactEmail: string;
+  image?: string;
 }
 
 interface FoodListingFormProps {
@@ -39,13 +40,17 @@ const FoodListingForm = ({ onSubmit }: FoodListingFormProps) => {
     category: "",
     quantity: "",
     expireDate: undefined,
+    isExpired: false,
     company: "",
     listingType: "donate",
     price: "",
     location: "",
     contactPhone: "",
     contactEmail: "",
+    image: "",
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleChange = (
@@ -61,6 +66,48 @@ const FoodListingForm = ({ onSubmit }: FoodListingFormProps) => {
 
   const handleDateChange = (date: Date | undefined) => {
     setFoodItem((prev) => ({ ...prev, expireDate: date }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|png|jpg|webp)$/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPEG, PNG, or WebP image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setImagePreview(result);
+      setFoodItem((prev) => ({ ...prev, image: result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setFoodItem((prev) => ({ ...prev, image: "" }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -203,33 +250,35 @@ const FoodListingForm = ({ onSubmit }: FoodListingFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expireDate">Expiration Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !foodItem.expireDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {foodItem.expireDate ? (
-                      format(foodItem.expireDate, "PPP")
-                    ) : (
-                      <span>Select expiration date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={foodItem.expireDate}
-                    onSelect={handleDateChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="expireDate">Expiration Date (Optional for produce)</Label>
+              <div className="flex flex-col gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !foodItem.expireDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {foodItem.expireDate ? (
+                        format(foodItem.expireDate, "PPP")
+                      ) : (
+                        <span>Select expiration date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={foodItem.expireDate}
+                      onSelect={handleDateChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -277,6 +326,64 @@ const FoodListingForm = ({ onSubmit }: FoodListingFormProps) => {
                   value={foodItem.contactEmail}
                   onChange={handleChange}
                 />
+              </div>
+            </div>
+
+            {/* Image Upload Section */}
+            <div className="space-y-2">
+              <Label htmlFor="image">Food Image</Label>
+              <div className="flex flex-col gap-2">
+                {imagePreview ? (
+                  <div className="relative w-full max-w-xs mx-auto">
+                    <img 
+                      src={imagePreview} 
+                      alt="Food preview" 
+                      className="w-full h-48 object-cover rounded-md"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                      onClick={removeImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-500 text-center">
+                      Click to upload an image of your food item
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      JPEG, PNG, or WebP (max 5MB)
+                    </p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="image"
+                  name="image"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                />
+                {!imagePreview && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Image
+                  </Button>
+                )}
               </div>
             </div>
           </div>

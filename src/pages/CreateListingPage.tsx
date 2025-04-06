@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import FoodListingForm from "@/components/FoodListingForm";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ interface FoodItemData {
   category: string;
   quantity: string;
   expireDate: Date | undefined;
+  isExpired: boolean;
   company: string;
   listingType: "donate" | "sell";
   price: string;
@@ -29,12 +29,31 @@ const CreateListingPage = () => {
     
     // For demonstration, store in localStorage
     const listings = JSON.parse(localStorage.getItem("foodListings") || "[]");
-    listings.push({
+    const newListing = {
       ...foodItem,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
-    });
+      status: "Active",
+    };
+    listings.push(newListing);
     localStorage.setItem("foodListings", JSON.stringify(listings));
+    
+    // Store in user's donation history
+    const userEmail = JSON.parse(localStorage.getItem("user") || "{}").email;
+    if (userEmail) {
+      const donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${userEmail}`) || "[]");
+      donationHistory.push({
+        id: newListing.id,
+        date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
+        item: foodItem.name,
+        quantity: foodItem.quantity,
+        status: foodItem.isExpired ? "Expired" : "Active",
+        listingType: foodItem.listingType,
+        category: foodItem.category,
+        isExpired: foodItem.isExpired
+      });
+      localStorage.setItem(`donationHistory_${userEmail}`, JSON.stringify(donationHistory));
+    }
     
     toast({
       title: "Listing created",
