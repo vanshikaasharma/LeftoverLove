@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-// Mock data for food listings
-const FOOD_LISTINGS = [
+// Mock data for food listings (fallback if no listings in localStorage)
+const MOCK_FOOD_LISTINGS = [
   {
     id: 1,
     name: "Fresh Produce Box",
@@ -68,14 +68,50 @@ const BrowseFoodPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [radius, setRadius] = useState([5]); // Default 5 miles radius
-  const [filteredListings, setFilteredListings] = useState(FOOD_LISTINGS);
+  const [allListings, setAllListings] = useState<any[]>([]);
+  const [filteredListings, setFilteredListings] = useState<any[]>([]);
+
+  // Load food listings from localStorage on component mount
+  useEffect(() => {
+    // Get listings from localStorage
+    const storedListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+    
+    // If there are stored listings, use them; otherwise use mock data
+    if (storedListings.length > 0) {
+      // Format the listings to match the expected structure
+      const formattedListings = storedListings.map((listing: any) => ({
+        id: listing.id,
+        name: listing.name,
+        provider: listing.company || "Individual Provider",
+        distance: "Near you", // Default distance
+        type: listing.listingType === "donate" ? "Free" : "Reduced Price",
+        image: listing.image || "https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+        description: listing.description || "No description provided.",
+        price: listing.price,
+        category: listing.category,
+        quantity: listing.quantity,
+        expireDate: listing.expireDate,
+        location: listing.location,
+        contactPhone: listing.contactPhone,
+        contactEmail: listing.contactEmail,
+        listingType: listing.listingType,
+        createdAt: listing.createdAt
+      }));
+      
+      setAllListings(formattedListings);
+      setFilteredListings(formattedListings);
+    } else {
+      setAllListings(MOCK_FOOD_LISTINGS);
+      setFilteredListings(MOCK_FOOD_LISTINGS);
+    }
+  }, []);
 
   const handleSearch = () => {
-    // In a real app, this would query a database based on search, location, and radius
-    // For now, we'll just filter the mock data based on the search query
-    const filtered = FOOD_LISTINGS.filter(listing => 
+    // Filter listings based on search query
+    const filtered = allListings.filter(listing => 
       listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      listing.description.toLowerCase().includes(searchQuery.toLowerCase())
+      listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.category?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredListings(filtered);
   };
