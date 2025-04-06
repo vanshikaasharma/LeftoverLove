@@ -11,8 +11,8 @@ const DashboardPage = () => {
   const [userData, setUserData] = useState<any>({});
   const [recentListings, setRecentListings] = useState<any[]>([]);
   const [stats, setStats] = useState({
-    totalListings: 0,
-    activeListings: 0,
+    totalDonationsListed: 0,
+    activeDonations: 0,
     totalDonations: 0,
     totalConnections: 0
   });
@@ -41,11 +41,18 @@ const DashboardPage = () => {
     // Get the 3 most recent listings
     setRecentListings(sortedListings.slice(0, 3));
     
+    // Get user's donation history
+    const userEmail = JSON.parse(user).email;
+    const donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${userEmail}`) || "[]");
+    
+    // Count active donations (status is "Active")
+    const activeDonations = donationHistory.filter((donation: any) => donation.status === "Active").length;
+    
     // Set stats based on actual data
     setStats({
-      totalListings: allListings.length,
-      activeListings: allListings.filter((listing: any) => !listing.isClaimed).length,
-      totalDonations: userRole === "provider" ? allListings.length : 3,
+      totalDonationsListed: donationHistory.length,
+      activeDonations: activeDonations,
+      totalDonations: userRole === "provider" ? donationHistory.length : 3,
       totalConnections: 8
     });
   }, [navigate, userRole]);
@@ -154,8 +161,8 @@ const DashboardPage = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Total {userRole === "provider" ? "Listings" : "Items"}</p>
-                  <p className="text-2xl font-bold text-gray-800">{stats.totalListings}</p>
+                  <p className="text-sm text-gray-500">Total Donations Listed</p>
+                  <p className="text-2xl font-bold text-gray-800">{stats.totalDonationsListed}</p>
                 </div>
                 <div className="bg-green-100 p-2 rounded-full">
                   <Package className="h-5 w-5 text-green-600" />
@@ -166,8 +173,8 @@ const DashboardPage = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Active {userRole === "provider" ? "Listings" : "Items"}</p>
-                  <p className="text-2xl font-bold text-gray-800">{stats.activeListings}</p>
+                  <p className="text-sm text-gray-500">Active Donations</p>
+                  <p className="text-2xl font-bold text-gray-800">{stats.activeDonations}</p>
                 </div>
                 <div className="bg-blue-100 p-2 rounded-full">
                   <Clock className="h-5 w-5 text-blue-600" />

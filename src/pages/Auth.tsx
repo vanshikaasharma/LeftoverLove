@@ -59,9 +59,6 @@ const Auth = () => {
         title: "Account created",
         description: "Your account has been created successfully.",
       });
-      
-      // For new sign-ups, redirect to role selection
-      navigate("/role-selection");
     } else {
       // For sign in, check if user exists and verify password
       const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
@@ -92,9 +89,6 @@ const Auth = () => {
           title: "Welcome back",
           description: "You have been signed in successfully.",
         });
-        
-        // For existing users, redirect to dashboard
-        navigate("/dashboard");
       } else {
         // User doesn't exist in our records, create a new ID
         const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -122,11 +116,11 @@ const Auth = () => {
           title: "Account created",
           description: "Your account has been created successfully.",
         });
-        
-        // For new users created during sign-in, redirect to role selection
-        navigate("/role-selection");
       }
     }
+    
+    // Redirect to dashboard instead of role selection
+    navigate("/dashboard");
   };
 
   return (
