@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -5,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, MapPin, Apple, Filter, AlertCircle } from "lucide-react";
+import { Search, MapPin, Apple, Filter, AlertCircle, MapPinOff } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -95,6 +98,21 @@ const BrowseFoodPage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [userCoordinates, setUserCoordinates] = useState<{lat: number; lng: number} | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'prompt' | 'granted' | 'denied' | 'unsupported'>('prompt');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  // Check if location permission was previously granted
+  useEffect(() => {
+    const savedLocationPermission = localStorage.getItem('locationPermission');
+    if (savedLocationPermission) {
+      setLocationStatus(savedLocationPermission as 'granted' | 'denied');
+    } else {
+      // Show location dialog when the page loads for the first time
+      setShowLocationDialog(true);
+    }
+  }, []);
 
   // Load food listings from localStorage on component mount
   useEffect(() => {
@@ -130,6 +148,91 @@ const BrowseFoodPage = () => {
       setFilteredListings(MOCK_FOOD_LISTINGS);
     }
   }, []);
+
+  // When user coordinates change, update nearby food listings
+  useEffect(() => {
+    if (userCoordinates) {
+      findNearbyFood(userCoordinates);
+    }
+  }, [userCoordinates, allListings]);
+
+  // Get user's current location
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('unsupported');
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setUserCoordinates(coords);
+        setLocationStatus('granted');
+        localStorage.setItem('locationPermission', 'granted');
+        localStorage.setItem('userCoordinates', JSON.stringify(coords));
+        
+        // Get address from coordinates (reverse geocoding)
+        reverseGeocode(coords);
+        setIsLoadingLocation(false);
+        setShowLocationDialog(false);
+        
+        toast.success("Using your current location to find nearby food");
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        setLocationStatus('denied');
+        localStorage.setItem('locationPermission', 'denied');
+        setIsLoadingLocation(false);
+        
+        toast.error("Location access denied. Please enter your location manually");
+      }
+    );
+  };
+
+  // Reverse geocode to get address from coordinates
+  const reverseGeocode = async (coords: { lat: number; lng: number }) => {
+    // In a real app, this would call a geocoding API
+    // For now, we'll just set a generic location
+    setLocation("Your Current Location");
+  };
+
+  // Find food listings near user's location
+  const findNearbyFood = (coords: { lat: number; lng: number }) => {
+    // In a real app, this would use distance calculations with the coordinates
+    // For now, we'll simulate it by showing all listings with distances
+    
+    // Calculate mock distances for all listings
+    const listingsWithDistance = allListings.map(listing => {
+      // Generate a random distance between 0.1 and radius[0] miles
+      const distance = (Math.random() * radius[0]).toFixed(1);
+      return {
+        ...listing,
+        distance: `${distance} mi`
+      };
+    });
+    
+    // Sort by distance (closest first)
+    const sortedListings = listingsWithDistance.sort((a, b) => {
+      const distA = parseFloat(a.distance);
+      const distB = parseFloat(b.distance);
+      return distA - distB;
+    });
+    
+    setFilteredListings(sortedListings);
+  };
+
+  // Handle location permission denial
+  const handleDenyLocation = () => {
+    setLocationStatus('denied');
+    localStorage.setItem('locationPermission', 'denied');
+    setShowLocationDialog(false);
+    toast.info("You can still search for food by entering a location manually");
+  };
 
   // Handle search input changes
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -356,16 +459,66 @@ const BrowseFoodPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-700 mb-2">Find Food Near You</h1>
+          <h1 className="text-3xl font-bold text-teal-700 mb-2">Find Food Near You</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Search for free or reduced-price food available in your community
           </p>
         </div>
+        
+        {/* Location permission dialog */}
+        <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Share Your Location</DialogTitle>
+              <DialogDescription>
+                Allow Leftover Love to access your location to find food available near you. This helps us show you the most relevant options in your area.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-center py-4">
+              {locationStatus === 'unsupported' ? (
+                <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <MapPinOff className="h-12 w-12 text-amber-500 mx-auto mb-2" />
+                  <p className="text-amber-800">Location services are not supported by your browser.</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <MapPin className="h-16 w-16 text-teal-600 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">
+                    We'll only use your location while you're using this app to help you find nearby food sources.
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleDenyLocation}
+                disabled={isLoadingLocation}
+              >
+                No Thanks
+              </Button>
+              <Button 
+                onClick={getCurrentLocation} 
+                className="bg-teal-600 hover:bg-teal-700"
+                disabled={locationStatus === 'unsupported' || isLoadingLocation}
+              >
+                {isLoadingLocation ? (
+                  <>
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                    Getting Location...
+                  </>
+                ) : (
+                  "Share My Location"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         
         {/* Search and filters section */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-8">
@@ -395,7 +548,7 @@ const BrowseFoodPage = () => {
                   {locationSuggestions.map((suggestion, index) => (
                     <div 
                       key={index}
-                      className="px-4 py-2 hover:bg-green-50 cursor-pointer text-sm"
+                      className="px-4 py-2 hover:bg-teal-50 cursor-pointer text-sm"
                       onClick={() => handleLocationSuggestionClick(suggestion)}
                     >
                       <div className="flex items-center">
@@ -437,11 +590,29 @@ const BrowseFoodPage = () => {
                 </DialogContent>
               </Dialog>
               
-              <Button onClick={handleSearch} className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={handleSearch} 
+                className="bg-teal-600 hover:bg-teal-700"
+              >
                 Search
               </Button>
             </div>
           </div>
+          
+          {/* Current location button */}
+          {locationStatus !== 'granted' && (
+            <div className="mt-3 flex justify-center">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-teal-600" 
+                onClick={() => setShowLocationDialog(true)}
+              >
+                <MapPin className="h-4 w-4 mr-1" />
+                Use my current location
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Category suggestions */}
@@ -471,10 +642,12 @@ const BrowseFoodPage = () => {
         
         {/* Results section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isSearching ? (
+          {isSearching || isLoadingLocation ? (
             <div className="col-span-full text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Searching for food items...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">
+                {isLoadingLocation ? "Getting your location..." : "Searching for food items..."}
+              </p>
             </div>
           ) : filteredListings.length > 0 ? (
             filteredListings.map((listing) => (
@@ -492,14 +665,14 @@ const BrowseFoodPage = () => {
                 </div>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl text-green-700 hover:underline">{listing.name}</CardTitle>
-                    <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                    <CardTitle className="text-xl text-teal-700 hover:underline">{listing.name}</CardTitle>
+                    <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-teal-100 text-teal-800">
                       {listing.type}
                     </span>
                   </div>
                   <CardDescription className="flex items-center gap-2 text-sm text-gray-500">
                     <MapPin className="h-4 w-4" />
-                    <span>{listing.location || "Not specified"}</span>
+                    <span>{listing.distance ? `${listing.distance} - ` : ""}{listing.location || "Not specified"}</span>
                   </CardDescription>
                   {listing.category && (
                     <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
