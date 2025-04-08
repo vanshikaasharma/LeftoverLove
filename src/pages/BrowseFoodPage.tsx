@@ -5,28 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, MapPin, Apple, Filter, AlertCircle, MapPinOff } from "lucide-react";
+import { Search, MapPin, Apple, Filter, AlertCircle } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+// Mock data for food listings (fallback if no listings in localStorage)
 const MOCK_FOOD_LISTINGS = [
   {
     id: 1,
@@ -80,6 +70,7 @@ const MOCK_FOOD_LISTINGS = [
   },
 ];
 
+// Food categories for suggestions
 const FOOD_CATEGORIES = [
   "Fruits & Vegetables",
   "Dairy & Eggs",
@@ -93,100 +84,31 @@ const FOOD_CATEGORIES = [
   "Other"
 ];
 
-const VANCOUVER_LOCATIONS = [
-  "Downtown",
-  "West End",
-  "Yaletown",
-  "Gastown",
-  "Coal Harbour",
-  "Chinatown",
-  "Strathcona",
-  "Mount Pleasant",
-  "Main Street",
-  "Kitsilano",
-  "Point Grey",
-  "Dunbar",
-  "Kerrisdale",
-  "Marpole",
-  "Oakridge",
-  "Shaughnessy",
-  "Fairview",
-  "South Granville",
-  "Commercial Drive",
-  "Hastings-Sunrise",
-  "Renfrew-Collingwood",
-  "Kensington-Cedar Cottage",
-  "Riley Park",
-  "South Cambie",
-  "Arbutus Ridge",
-  "West Point Grey",
-  "University Endowment Lands",
-  "Sunset",
-  "Victoria-Fraserview",
-  "Killarney"
-];
-
-const VANCOUVER_ADDRESSES = [
-  "555 W Hastings St, Vancouver, BC",
-  "800 Robson St, Vancouver, BC",
-  "601 W Cordova St, Vancouver, BC",
-  "1055 Canada Pl, Vancouver, BC",
-  "750 Hornby St, Vancouver, BC",
-  "900 W Georgia St, Vancouver, BC",
-  "375 Water St, Vancouver, BC",
-  "639 Hornby St, Vancouver, BC",
-  "8181 Cambie Rd, Vancouver, BC",
-  "3211 Grant McConachie Way, Vancouver, BC",
-  "201 W Hastings St, Vancouver, BC",
-  "125 E 10th Ave, Vancouver, BC",
-  "1669 Johnston St, Vancouver, BC",
-  "2000 W 10th Ave, Vancouver, BC",
-  "88 W Pender St, Vancouver, BC",
-  "1181 Seymour St, Vancouver, BC",
-  "401 Burrard St, Vancouver, BC",
-  "6200 University Blvd, Vancouver, BC",
-  "3663 Crowley Dr, Vancouver, BC",
-  "3883 Rupert St, Vancouver, BC"
-];
-
 const BrowseFoodPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [radius, setRadius] = useState([5]);
+  const [radius, setRadius] = useState([5]); // Default 5 miles radius
   const [allListings, setAllListings] = useState<any[]>([]);
   const [filteredListings, setFilteredListings] = useState<any[]>([]);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [userCoordinates, setUserCoordinates] = useState<{lat: number; lng: number} | null>(null);
-  const [locationStatus, setLocationStatus] = useState<'prompt' | 'granted' | 'denied' | 'unsupported'>('prompt');
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [openLocationPopover, setOpenLocationPopover] = useState(false);
-  const [vancouverAddressSuggestions, setVancouverAddressSuggestions] = useState<string[]>([]);
 
+  // Load food listings from localStorage on component mount
   useEffect(() => {
-    const savedLocationPermission = localStorage.getItem('locationPermission');
-    if (savedLocationPermission) {
-      setLocationStatus(savedLocationPermission as 'granted' | 'denied');
-      if (savedLocationPermission === 'denied') {
-        setLocation("Vancouver, BC");
-      }
-    } else {
-      setShowLocationDialog(true);
-    }
-  }, []);
-
-  useEffect(() => {
+    // Get listings from localStorage
     const storedListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+    
+    // If there are stored listings, use them; otherwise use mock data
     if (storedListings.length > 0) {
+      // Format the listings to match the expected structure
       const formattedListings = storedListings.map((listing: any) => ({
         id: listing.id,
         name: listing.name,
         provider: listing.company || "Individual Provider",
-        distance: "Near you",
+        distance: "Near you", // Default distance
         type: listing.listingType === "donate" ? "Free" : "Reduced Price",
         image: listing.image || "https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
         description: listing.description || "No description provided.",
@@ -200,6 +122,7 @@ const BrowseFoodPage = () => {
         listingType: listing.listingType,
         createdAt: listing.createdAt
       }));
+      
       setAllListings(formattedListings);
       setFilteredListings(formattedListings);
     } else {
@@ -208,152 +131,90 @@ const BrowseFoodPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (userCoordinates) {
-      findNearbyFood(userCoordinates);
-    }
-  }, [userCoordinates, allListings]);
-
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationStatus('unsupported');
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-
-    setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        setUserCoordinates(coords);
-        setLocationStatus('granted');
-        localStorage.setItem('locationPermission', 'granted');
-        localStorage.setItem('userCoordinates', JSON.stringify(coords));
-        
-        reverseGeocode(coords);
-        setIsLoadingLocation(false);
-        setShowLocationDialog(false);
-        
-        toast.success("Using your current location to find nearby food");
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-        setLocationStatus('denied');
-        localStorage.setItem('locationPermission', 'denied');
-        setIsLoadingLocation(false);
-        
-        toast.error("Location access denied. Please enter your location manually");
-      }
-    );
-  };
-
-  const reverseGeocode = async (coords: { lat: number; lng: number }) => {
-    setLocation("Your Current Location");
-  };
-
-  const findNearbyFood = (coords: { lat: number; lng: number }) => {
-    const listingsWithDistance = allListings.map(listing => {
-      const distance = (Math.random() * radius[0]).toFixed(1);
-      return {
-        ...listing,
-        distance: `${distance} mi`
-      };
-    });
-    
-    const sortedListings = listingsWithDistance.sort((a, b) => {
-      const distA = parseFloat(a.distance);
-      const distB = parseFloat(b.distance);
-      return distA - distB;
-    });
-    
-    setFilteredListings(sortedListings);
-  };
-
-  const handleDenyLocation = () => {
-    setLocationStatus('denied');
-    localStorage.setItem('locationPermission', 'denied');
-    setShowLocationDialog(false);
-    setLocation("Vancouver, BC");
-    toast.info("You can search for food by entering specific locations in Vancouver");
-  };
-
+  // Handle search input changes
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
+    // If the search query is empty, show all listings
     if (!query.trim()) {
       setFilteredListings(allListings);
       setSuggestedCategories([]);
       return;
     }
     
+    // Start searching as the user types
     searchListings(query);
   };
 
+  // Handle location input changes
   const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const locationQuery = e.target.value;
     setLocation(locationQuery);
     
+    // If the location query is empty, hide suggestions
     if (!locationQuery.trim()) {
-      setVancouverAddressSuggestions([]);
-      setOpenLocationPopover(false);
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
       return;
     }
     
+    // Generate location suggestions based on the query
     generateLocationSuggestions(locationQuery);
   };
 
+  // Generate location suggestions based on the query
   const generateLocationSuggestions = (query: string) => {
-    if (!query.trim()) {
-      setVancouverAddressSuggestions([]);
-      setOpenLocationPopover(false);
-      return;
+    // In a real app, this would call a geocoding API
+    // For now, we'll use a simple filter on existing locations
+    
+    // Get unique locations from all listings
+    const uniqueLocations = [...new Set(allListings.map(listing => listing.location))];
+    
+    // Filter locations that match the query
+    const matchingLocations = uniqueLocations.filter(loc => 
+      loc.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    // If we have matching locations, show them as suggestions
+    if (matchingLocations.length > 0) {
+      setLocationSuggestions(matchingLocations);
+      setShowLocationSuggestions(true);
+    } else {
+      // If no matches, suggest some common locations
+      const commonLocations = [
+        "Downtown",
+        "North Side",
+        "South Side",
+        "East Side",
+        "West Side",
+        "University Area",
+        "Shopping District",
+        "Residential Area"
+      ];
+      
+      setLocationSuggestions(commonLocations);
+      setShowLocationSuggestions(true);
     }
-    
-    const lowerQuery = query.toLowerCase();
-    
-    const matchingLocations = VANCOUVER_LOCATIONS.filter(
-      loc => loc.toLowerCase().includes(lowerQuery)
-    );
-    
-    const matchingAddresses = VANCOUVER_ADDRESSES.filter(
-      addr => addr.toLowerCase().includes(lowerQuery)
-    );
-    
-    const combinedSuggestions = [...matchingLocations, ...matchingAddresses].slice(0, 10);
-    
-    setVancouverAddressSuggestions(combinedSuggestions);
-    setOpenLocationPopover(combinedSuggestions.length > 0);
   };
 
-  const handleSelectVancouverAddress = (address: string) => {
-    setLocation(address);
-    setOpenLocationPopover(false);
-    
-    const mockCoordinates = {
-      lat: 49.2827 + (Math.random() - 0.5) * 0.1,
-      lng: -123.1207 + (Math.random() - 0.5) * 0.1
-    };
-    
-    findNearbyFood(mockCoordinates);
-    toast.success(`Showing food near ${address}`);
-  };
-
+  // Handle location suggestion click
   const handleLocationSuggestionClick = (suggestion: string) => {
     setLocation(suggestion);
     setShowLocationSuggestions(false);
     
+    // Filter listings by location
     filterListingsByLocation(suggestion);
   };
 
+  // Filter listings by location
   const filterListingsByLocation = (locationQuery: string) => {
+    // Filter listings based on location
     const locationFiltered = allListings.filter(listing => 
       listing.location.toLowerCase().includes(locationQuery.toLowerCase())
     );
     
+    // If we also have a search query, filter those results further
     if (searchQuery.trim()) {
       const searchFiltered = locationFiltered.filter(listing => 
         listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -366,18 +227,22 @@ const BrowseFoodPage = () => {
       setFilteredListings(locationFiltered);
     }
     
+    // Show toast notification
     toast.info(`Showing results for location: "${locationQuery}"`);
   };
 
+  // Search listings based on query
   const searchListings = (query: string) => {
     setIsSearching(true);
     
+    // Filter listings based on search query
     const filtered = allListings.filter(listing => 
       listing.name.toLowerCase().includes(query.toLowerCase()) ||
       listing.description.toLowerCase().includes(query.toLowerCase()) ||
       listing.category?.toLowerCase().includes(query.toLowerCase())
     );
     
+    // If we also have a location filter, apply it
     if (location.trim()) {
       const locationFiltered = filtered.filter(listing => 
         listing.location.toLowerCase().includes(location.toLowerCase())
@@ -388,11 +253,14 @@ const BrowseFoodPage = () => {
       setFilteredListings(filtered);
     }
     
+    // If no exact matches found, suggest similar categories
     if (filtered.length === 0) {
+      // Find categories that contain the search query
       const matchingCategories = FOOD_CATEGORIES.filter(category => 
         category.toLowerCase().includes(query.toLowerCase())
       );
       
+      // If no matching categories, suggest categories based on keywords
       if (matchingCategories.length === 0) {
         const keywordSuggestions = suggestCategoriesByKeywords(query);
         setSuggestedCategories(keywordSuggestions);
@@ -406,10 +274,12 @@ const BrowseFoodPage = () => {
     setIsSearching(false);
   };
 
+  // Suggest categories based on keywords in the search query
   const suggestCategoriesByKeywords = (query: string) => {
     const keywords = query.toLowerCase().split(' ');
     const suggestions: string[] = [];
     
+    // Map keywords to categories
     const keywordToCategory: Record<string, string[]> = {
       'fruit': ['Fruits & Vegetables'],
       'vegetable': ['Fruits & Vegetables'],
@@ -448,24 +318,31 @@ const BrowseFoodPage = () => {
       'formula': ['Baby Food']
     };
     
+    // Check each keyword against the mapping
     keywords.forEach(keyword => {
       if (keywordToCategory[keyword]) {
         suggestions.push(...keywordToCategory[keyword]);
       }
     });
     
+    // Remove duplicates
     return [...new Set(suggestions)];
   };
 
+  // Handle search button click
   const handleSearch = () => {
+    // If we have a location, filter by location first
     if (location.trim()) {
       filterListingsByLocation(location);
     } else {
+      // Otherwise just search by query
       searchListings(searchQuery);
     }
   };
 
+  // Handle category suggestion click
   const handleCategorySuggestionClick = (category: string) => {
+    // Filter listings by the selected category
     const categoryListings = allListings.filter(listing => 
       listing.category === category
     );
@@ -474,73 +351,23 @@ const BrowseFoodPage = () => {
     setSearchQuery(category);
     setSuggestedCategories([]);
     
+    // Show toast notification
     toast.info(`Showing results for "${category}"`);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-teal-700 mb-2">Find Food Near You</h1>
+          <h1 className="text-3xl font-bold text-green-700 mb-2">Find Food Near You</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Search for free or reduced-price food available in your community
           </p>
         </div>
         
-        <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Share Your Location</DialogTitle>
-              <DialogDescription>
-                Allow Leftover Love to access your location to find food available near you. This helps us show you the most relevant options in your area.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-4">
-              {locationStatus === 'unsupported' ? (
-                <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <MapPinOff className="h-12 w-12 text-amber-500 mx-auto mb-2" />
-                  <p className="text-amber-800">Location services are not supported by your browser.</p>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <MapPin className="h-16 w-16 text-teal-600 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">
-                    We'll only use your location while you're using this app to help you find nearby food sources.
-                  </p>
-                  <p className="text-sm text-teal-700 font-medium">
-                    If you decline, you can still search by entering Vancouver locations manually.
-                  </p>
-                </div>
-              )}
-            </div>
-            <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
-              <Button 
-                variant="outline" 
-                onClick={handleDenyLocation}
-                disabled={isLoadingLocation}
-              >
-                No Thanks, I'll Enter My Location
-              </Button>
-              <Button 
-                onClick={getCurrentLocation} 
-                className="bg-teal-600 hover:bg-teal-700"
-                disabled={locationStatus === 'unsupported' || isLoadingLocation}
-              >
-                {isLoadingLocation ? (
-                  <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                    Getting Location...
-                  </>
-                ) : (
-                  "Share My Location"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
+        {/* Search and filters section */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
@@ -556,46 +383,29 @@ const BrowseFoodPage = () => {
             
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Popover open={openLocationPopover} onOpenChange={setOpenLocationPopover}>
-                <PopoverTrigger asChild>
-                  <div className="w-full">
-                    <Input
-                      type="text"
-                      placeholder="Enter Vancouver location"
-                      value={location}
-                      onChange={handleLocationInputChange}
-                      className="pl-10 w-full"
-                      onFocus={() => {
-                        if (location.trim() && vancouverAddressSuggestions.length > 0) {
-                          setOpenLocationPopover(true);
-                        }
-                      }}
-                    />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
-                  <Command>
-                    <CommandList>
-                      <CommandGroup heading="Vancouver Locations">
-                        {vancouverAddressSuggestions.length > 0 ? (
-                          vancouverAddressSuggestions.map((address, index) => (
-                            <CommandItem
-                              key={index}
-                              onSelect={() => handleSelectVancouverAddress(address)}
-                              className="flex items-center cursor-pointer"
-                            >
-                              <MapPin className="h-4 w-4 mr-2 text-teal-500" />
-                              <span>{address}</span>
-                            </CommandItem>
-                          ))
-                        ) : (
-                          <CommandEmpty>No locations found</CommandEmpty>
-                        )}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="text"
+                placeholder="Enter your location"
+                value={location}
+                onChange={handleLocationInputChange}
+                className="pl-10"
+              />
+              {showLocationSuggestions && locationSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <div 
+                      key={index}
+                      className="px-4 py-2 hover:bg-green-50 cursor-pointer text-sm"
+                      onClick={() => handleLocationSuggestionClick(suggestion)}
+                    >
+                      <div className="flex items-center">
+                        <MapPin className="h-3 w-3 mr-2 text-gray-500" />
+                        {suggestion}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="flex gap-4">
@@ -627,30 +437,14 @@ const BrowseFoodPage = () => {
                 </DialogContent>
               </Dialog>
               
-              <Button 
-                onClick={handleSearch} 
-                className="bg-teal-600 hover:bg-teal-700"
-              >
+              <Button onClick={handleSearch} className="bg-green-600 hover:bg-green-700">
                 Search
               </Button>
             </div>
           </div>
-          
-          {locationStatus !== 'granted' && (
-            <div className="mt-3 flex justify-center">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-teal-600" 
-                onClick={() => setShowLocationDialog(true)}
-              >
-                <MapPin className="h-4 w-4 mr-1" />
-                Use my current location
-              </Button>
-            </div>
-          )}
         </div>
         
+        {/* Category suggestions */}
         {suggestedCategories.length > 0 && (
           <div className="bg-amber-50 rounded-lg p-4 mb-6 border border-amber-200">
             <div className="flex items-start gap-3">
@@ -675,13 +469,12 @@ const BrowseFoodPage = () => {
           </div>
         )}
         
+        {/* Results section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isSearching || isLoadingLocation ? (
+          {isSearching ? (
             <div className="col-span-full text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">
-                {isLoadingLocation ? "Getting your location..." : "Searching for food items..."}
-              </p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Searching for food items...</p>
             </div>
           ) : filteredListings.length > 0 ? (
             filteredListings.map((listing) => (
@@ -699,14 +492,14 @@ const BrowseFoodPage = () => {
                 </div>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl text-teal-700 hover:underline">{listing.name}</CardTitle>
-                    <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-teal-100 text-teal-800">
+                    <CardTitle className="text-xl text-green-700 hover:underline">{listing.name}</CardTitle>
+                    <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
                       {listing.type}
                     </span>
                   </div>
                   <CardDescription className="flex items-center gap-2 text-sm text-gray-500">
                     <MapPin className="h-4 w-4" />
-                    <span>{listing.distance ? `${listing.distance} - ` : ""}{listing.location || "Not specified"}</span>
+                    <span>{listing.location || "Not specified"}</span>
                   </CardDescription>
                   {listing.category && (
                     <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
