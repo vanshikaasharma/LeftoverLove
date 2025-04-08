@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -18,8 +17,16 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { 
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// Mock data for food listings (fallback if no listings in localStorage)
 const MOCK_FOOD_LISTINGS = [
   {
     id: 1,
@@ -73,7 +80,6 @@ const MOCK_FOOD_LISTINGS = [
   },
 ];
 
-// Food categories for suggestions
 const FOOD_CATEGORIES = [
   "Fruits & Vegetables",
   "Dairy & Eggs",
@@ -87,11 +93,34 @@ const FOOD_CATEGORIES = [
   "Other"
 ];
 
+const VANCOUVER_ADDRESSES = [
+  "555 W Hastings St, Vancouver, BC",
+  "800 Robson St, Vancouver, BC",
+  "601 W Cordova St, Vancouver, BC",
+  "1055 Canada Pl, Vancouver, BC",
+  "750 Hornby St, Vancouver, BC",
+  "900 W Georgia St, Vancouver, BC",
+  "375 Water St, Vancouver, BC",
+  "639 Hornby St, Vancouver, BC",
+  "8181 Cambie Rd, Vancouver, BC",
+  "3211 Grant McConachie Way, Vancouver, BC",
+  "201 W Hastings St, Vancouver, BC",
+  "125 E 10th Ave, Vancouver, BC",
+  "1669 Johnston St, Vancouver, BC",
+  "2000 W 10th Ave, Vancouver, BC",
+  "88 W Pender St, Vancouver, BC",
+  "1181 Seymour St, Vancouver, BC",
+  "401 Burrard St, Vancouver, BC",
+  "6200 University Blvd, Vancouver, BC",
+  "3663 Crowley Dr, Vancouver, BC",
+  "3883 Rupert St, Vancouver, BC"
+];
+
 const BrowseFoodPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [radius, setRadius] = useState([5]); // Default 5 miles radius
+  const [radius, setRadius] = useState([5]);
   const [allListings, setAllListings] = useState<any[]>([]);
   const [filteredListings, setFilteredListings] = useState<any[]>([]);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
@@ -102,31 +131,29 @@ const BrowseFoodPage = () => {
   const [userCoordinates, setUserCoordinates] = useState<{lat: number; lng: number} | null>(null);
   const [locationStatus, setLocationStatus] = useState<'prompt' | 'granted' | 'denied' | 'unsupported'>('prompt');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [openLocationPopover, setOpenLocationPopover] = useState(false);
+  const [vancouverAddressSuggestions, setVancouverAddressSuggestions] = useState<string[]>([]);
 
-  // Check if location permission was previously granted
   useEffect(() => {
     const savedLocationPermission = localStorage.getItem('locationPermission');
     if (savedLocationPermission) {
       setLocationStatus(savedLocationPermission as 'granted' | 'denied');
+      if (savedLocationPermission === 'denied') {
+        setLocation("Vancouver, BC");
+      }
     } else {
-      // Show location dialog when the page loads for the first time
       setShowLocationDialog(true);
     }
   }, []);
 
-  // Load food listings from localStorage on component mount
   useEffect(() => {
-    // Get listings from localStorage
     const storedListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
-    
-    // If there are stored listings, use them; otherwise use mock data
     if (storedListings.length > 0) {
-      // Format the listings to match the expected structure
       const formattedListings = storedListings.map((listing: any) => ({
         id: listing.id,
         name: listing.name,
         provider: listing.company || "Individual Provider",
-        distance: "Near you", // Default distance
+        distance: "Near you",
         type: listing.listingType === "donate" ? "Free" : "Reduced Price",
         image: listing.image || "https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
         description: listing.description || "No description provided.",
@@ -140,7 +167,6 @@ const BrowseFoodPage = () => {
         listingType: listing.listingType,
         createdAt: listing.createdAt
       }));
-      
       setAllListings(formattedListings);
       setFilteredListings(formattedListings);
     } else {
@@ -149,14 +175,12 @@ const BrowseFoodPage = () => {
     }
   }, []);
 
-  // When user coordinates change, update nearby food listings
   useEffect(() => {
     if (userCoordinates) {
       findNearbyFood(userCoordinates);
     }
   }, [userCoordinates, allListings]);
 
-  // Get user's current location
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       setLocationStatus('unsupported');
@@ -176,7 +200,6 @@ const BrowseFoodPage = () => {
         localStorage.setItem('locationPermission', 'granted');
         localStorage.setItem('userCoordinates', JSON.stringify(coords));
         
-        // Get address from coordinates (reverse geocoding)
         reverseGeocode(coords);
         setIsLoadingLocation(false);
         setShowLocationDialog(false);
@@ -194,21 +217,12 @@ const BrowseFoodPage = () => {
     );
   };
 
-  // Reverse geocode to get address from coordinates
   const reverseGeocode = async (coords: { lat: number; lng: number }) => {
-    // In a real app, this would call a geocoding API
-    // For now, we'll just set a generic location
     setLocation("Your Current Location");
   };
 
-  // Find food listings near user's location
   const findNearbyFood = (coords: { lat: number; lng: number }) => {
-    // In a real app, this would use distance calculations with the coordinates
-    // For now, we'll simulate it by showing all listings with distances
-    
-    // Calculate mock distances for all listings
     const listingsWithDistance = allListings.map(listing => {
-      // Generate a random distance between 0.1 and radius[0] miles
       const distance = (Math.random() * radius[0]).toFixed(1);
       return {
         ...listing,
@@ -216,7 +230,6 @@ const BrowseFoodPage = () => {
       };
     });
     
-    // Sort by distance (closest first)
     const sortedListings = listingsWithDistance.sort((a, b) => {
       const distA = parseFloat(a.distance);
       const distB = parseFloat(b.distance);
@@ -226,65 +239,50 @@ const BrowseFoodPage = () => {
     setFilteredListings(sortedListings);
   };
 
-  // Handle location permission denial
   const handleDenyLocation = () => {
     setLocationStatus('denied');
     localStorage.setItem('locationPermission', 'denied');
     setShowLocationDialog(false);
-    toast.info("You can still search for food by entering a location manually");
+    setLocation("Vancouver, BC");
+    toast.info("You can search for food by entering specific locations in Vancouver");
   };
 
-  // Handle search input changes
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    // If the search query is empty, show all listings
     if (!query.trim()) {
       setFilteredListings(allListings);
       setSuggestedCategories([]);
       return;
     }
     
-    // Start searching as the user types
     searchListings(query);
   };
 
-  // Handle location input changes
   const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const locationQuery = e.target.value;
     setLocation(locationQuery);
     
-    // If the location query is empty, hide suggestions
     if (!locationQuery.trim()) {
       setLocationSuggestions([]);
       setShowLocationSuggestions(false);
       return;
     }
     
-    // Generate location suggestions based on the query
     generateLocationSuggestions(locationQuery);
   };
 
-  // Generate location suggestions based on the query
   const generateLocationSuggestions = (query: string) => {
-    // In a real app, this would call a geocoding API
-    // For now, we'll use a simple filter on existing locations
-    
-    // Get unique locations from all listings
     const uniqueLocations = [...new Set(allListings.map(listing => listing.location))];
-    
-    // Filter locations that match the query
     const matchingLocations = uniqueLocations.filter(loc => 
       loc.toLowerCase().includes(query.toLowerCase())
     );
     
-    // If we have matching locations, show them as suggestions
     if (matchingLocations.length > 0) {
       setLocationSuggestions(matchingLocations);
       setShowLocationSuggestions(true);
     } else {
-      // If no matches, suggest some common locations
       const commonLocations = [
         "Downtown",
         "North Side",
@@ -301,23 +299,18 @@ const BrowseFoodPage = () => {
     }
   };
 
-  // Handle location suggestion click
   const handleLocationSuggestionClick = (suggestion: string) => {
     setLocation(suggestion);
     setShowLocationSuggestions(false);
     
-    // Filter listings by location
     filterListingsByLocation(suggestion);
   };
 
-  // Filter listings by location
   const filterListingsByLocation = (locationQuery: string) => {
-    // Filter listings based on location
     const locationFiltered = allListings.filter(listing => 
       listing.location.toLowerCase().includes(locationQuery.toLowerCase())
     );
     
-    // If we also have a search query, filter those results further
     if (searchQuery.trim()) {
       const searchFiltered = locationFiltered.filter(listing => 
         listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -330,22 +323,18 @@ const BrowseFoodPage = () => {
       setFilteredListings(locationFiltered);
     }
     
-    // Show toast notification
     toast.info(`Showing results for location: "${locationQuery}"`);
   };
 
-  // Search listings based on query
   const searchListings = (query: string) => {
     setIsSearching(true);
     
-    // Filter listings based on search query
     const filtered = allListings.filter(listing => 
       listing.name.toLowerCase().includes(query.toLowerCase()) ||
       listing.description.toLowerCase().includes(query.toLowerCase()) ||
       listing.category?.toLowerCase().includes(query.toLowerCase())
     );
     
-    // If we also have a location filter, apply it
     if (location.trim()) {
       const locationFiltered = filtered.filter(listing => 
         listing.location.toLowerCase().includes(location.toLowerCase())
@@ -356,14 +345,11 @@ const BrowseFoodPage = () => {
       setFilteredListings(filtered);
     }
     
-    // If no exact matches found, suggest similar categories
     if (filtered.length === 0) {
-      // Find categories that contain the search query
       const matchingCategories = FOOD_CATEGORIES.filter(category => 
         category.toLowerCase().includes(query.toLowerCase())
       );
       
-      // If no matching categories, suggest categories based on keywords
       if (matchingCategories.length === 0) {
         const keywordSuggestions = suggestCategoriesByKeywords(query);
         setSuggestedCategories(keywordSuggestions);
@@ -377,12 +363,10 @@ const BrowseFoodPage = () => {
     setIsSearching(false);
   };
 
-  // Suggest categories based on keywords in the search query
   const suggestCategoriesByKeywords = (query: string) => {
     const keywords = query.toLowerCase().split(' ');
     const suggestions: string[] = [];
     
-    // Map keywords to categories
     const keywordToCategory: Record<string, string[]> = {
       'fruit': ['Fruits & Vegetables'],
       'vegetable': ['Fruits & Vegetables'],
@@ -421,31 +405,24 @@ const BrowseFoodPage = () => {
       'formula': ['Baby Food']
     };
     
-    // Check each keyword against the mapping
     keywords.forEach(keyword => {
       if (keywordToCategory[keyword]) {
         suggestions.push(...keywordToCategory[keyword]);
       }
     });
     
-    // Remove duplicates
     return [...new Set(suggestions)];
   };
 
-  // Handle search button click
   const handleSearch = () => {
-    // If we have a location, filter by location first
     if (location.trim()) {
       filterListingsByLocation(location);
     } else {
-      // Otherwise just search by query
       searchListings(searchQuery);
     }
   };
 
-  // Handle category suggestion click
   const handleCategorySuggestionClick = (category: string) => {
-    // Filter listings by the selected category
     const categoryListings = allListings.filter(listing => 
       listing.category === category
     );
@@ -454,7 +431,6 @@ const BrowseFoodPage = () => {
     setSearchQuery(category);
     setSuggestedCategories([]);
     
-    // Show toast notification
     toast.info(`Showing results for "${category}"`);
   };
 
@@ -470,7 +446,6 @@ const BrowseFoodPage = () => {
           </p>
         </div>
         
-        {/* Location permission dialog */}
         <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -491,6 +466,9 @@ const BrowseFoodPage = () => {
                   <p className="text-gray-600 mb-4">
                     We'll only use your location while you're using this app to help you find nearby food sources.
                   </p>
+                  <p className="text-sm text-teal-700 font-medium">
+                    If you decline, you can still search by entering Vancouver locations manually.
+                  </p>
                 </div>
               )}
             </div>
@@ -500,7 +478,7 @@ const BrowseFoodPage = () => {
                 onClick={handleDenyLocation}
                 disabled={isLoadingLocation}
               >
-                No Thanks
+                No Thanks, I'll Enter My Location
               </Button>
               <Button 
                 onClick={getCurrentLocation} 
@@ -520,7 +498,6 @@ const BrowseFoodPage = () => {
           </DialogContent>
         </Dialog>
         
-        {/* Search and filters section */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
@@ -536,29 +513,41 @@ const BrowseFoodPage = () => {
             
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Enter your location"
-                value={location}
-                onChange={handleLocationInputChange}
-                className="pl-10"
-              />
-              {showLocationSuggestions && locationSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
-                  {locationSuggestions.map((suggestion, index) => (
-                    <div 
-                      key={index}
-                      className="px-4 py-2 hover:bg-teal-50 cursor-pointer text-sm"
-                      onClick={() => handleLocationSuggestionClick(suggestion)}
-                    >
-                      <div className="flex items-center">
-                        <MapPin className="h-3 w-3 mr-2 text-gray-500" />
-                        {suggestion}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Popover open={openLocationPopover && vancouverAddressSuggestions.length > 0} onOpenChange={setOpenLocationPopover}>
+                <PopoverTrigger asChild>
+                  <div className="w-full">
+                    <Input
+                      type="text"
+                      placeholder="Enter Vancouver location"
+                      value={location}
+                      onChange={handleLocationInputChange}
+                      className="pl-10 w-full"
+                    />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandList>
+                      <CommandGroup heading="Vancouver Addresses">
+                        {vancouverAddressSuggestions.length > 0 ? (
+                          vancouverAddressSuggestions.map((address, index) => (
+                            <CommandItem
+                              key={index}
+                              onSelect={() => handleSelectVancouverAddress(address)}
+                              className="flex items-center cursor-pointer"
+                            >
+                              <MapPin className="h-4 w-4 mr-2 text-teal-500" />
+                              <span>{address}</span>
+                            </CommandItem>
+                          ))
+                        ) : (
+                          <CommandEmpty>No addresses found</CommandEmpty>
+                        )}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="flex gap-4">
@@ -599,7 +588,6 @@ const BrowseFoodPage = () => {
             </div>
           </div>
           
-          {/* Current location button */}
           {locationStatus !== 'granted' && (
             <div className="mt-3 flex justify-center">
               <Button 
@@ -615,7 +603,6 @@ const BrowseFoodPage = () => {
           )}
         </div>
         
-        {/* Category suggestions */}
         {suggestedCategories.length > 0 && (
           <div className="bg-amber-50 rounded-lg p-4 mb-6 border border-amber-200">
             <div className="flex items-start gap-3">
@@ -640,7 +627,6 @@ const BrowseFoodPage = () => {
           </div>
         )}
         
-        {/* Results section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isSearching || isLoadingLocation ? (
             <div className="col-span-full text-center py-12">
