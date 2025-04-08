@@ -93,6 +93,39 @@ const FOOD_CATEGORIES = [
   "Other"
 ];
 
+const VANCOUVER_LOCATIONS = [
+  "Downtown",
+  "West End",
+  "Yaletown",
+  "Gastown",
+  "Coal Harbour",
+  "Chinatown",
+  "Strathcona",
+  "Mount Pleasant",
+  "Main Street",
+  "Kitsilano",
+  "Point Grey",
+  "Dunbar",
+  "Kerrisdale",
+  "Marpole",
+  "Oakridge",
+  "Shaughnessy",
+  "Fairview",
+  "South Granville",
+  "Commercial Drive",
+  "Hastings-Sunrise",
+  "Renfrew-Collingwood",
+  "Kensington-Cedar Cottage",
+  "Riley Park",
+  "South Cambie",
+  "Arbutus Ridge",
+  "West Point Grey",
+  "University Endowment Lands",
+  "Sunset",
+  "Victoria-Fraserview",
+  "Killarney"
+];
+
 const VANCOUVER_ADDRESSES = [
   "555 W Hastings St, Vancouver, BC",
   "800 Robson St, Vancouver, BC",
@@ -265,8 +298,8 @@ const BrowseFoodPage = () => {
     setLocation(locationQuery);
     
     if (!locationQuery.trim()) {
-      setLocationSuggestions([]);
-      setShowLocationSuggestions(false);
+      setVancouverAddressSuggestions([]);
+      setOpenLocationPopover(false);
       return;
     }
     
@@ -274,29 +307,39 @@ const BrowseFoodPage = () => {
   };
 
   const generateLocationSuggestions = (query: string) => {
-    const uniqueLocations = [...new Set(allListings.map(listing => listing.location))];
-    const matchingLocations = uniqueLocations.filter(loc => 
-      loc.toLowerCase().includes(query.toLowerCase())
+    if (!query.trim()) {
+      setVancouverAddressSuggestions([]);
+      setOpenLocationPopover(false);
+      return;
+    }
+    
+    const lowerQuery = query.toLowerCase();
+    
+    const matchingLocations = VANCOUVER_LOCATIONS.filter(
+      loc => loc.toLowerCase().includes(lowerQuery)
     );
     
-    if (matchingLocations.length > 0) {
-      setLocationSuggestions(matchingLocations);
-      setShowLocationSuggestions(true);
-    } else {
-      const commonLocations = [
-        "Downtown",
-        "North Side",
-        "South Side",
-        "East Side",
-        "West Side",
-        "University Area",
-        "Shopping District",
-        "Residential Area"
-      ];
-      
-      setLocationSuggestions(commonLocations);
-      setShowLocationSuggestions(true);
-    }
+    const matchingAddresses = VANCOUVER_ADDRESSES.filter(
+      addr => addr.toLowerCase().includes(lowerQuery)
+    );
+    
+    const combinedSuggestions = [...matchingLocations, ...matchingAddresses].slice(0, 10);
+    
+    setVancouverAddressSuggestions(combinedSuggestions);
+    setOpenLocationPopover(combinedSuggestions.length > 0);
+  };
+
+  const handleSelectVancouverAddress = (address: string) => {
+    setLocation(address);
+    setOpenLocationPopover(false);
+    
+    const mockCoordinates = {
+      lat: 49.2827 + (Math.random() - 0.5) * 0.1,
+      lng: -123.1207 + (Math.random() - 0.5) * 0.1
+    };
+    
+    findNearbyFood(mockCoordinates);
+    toast.success(`Showing food near ${address}`);
   };
 
   const handleLocationSuggestionClick = (suggestion: string) => {
@@ -513,7 +556,7 @@ const BrowseFoodPage = () => {
             
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Popover open={openLocationPopover && vancouverAddressSuggestions.length > 0} onOpenChange={setOpenLocationPopover}>
+              <Popover open={openLocationPopover} onOpenChange={setOpenLocationPopover}>
                 <PopoverTrigger asChild>
                   <div className="w-full">
                     <Input
@@ -522,13 +565,18 @@ const BrowseFoodPage = () => {
                       value={location}
                       onChange={handleLocationInputChange}
                       className="pl-10 w-full"
+                      onFocus={() => {
+                        if (location.trim() && vancouverAddressSuggestions.length > 0) {
+                          setOpenLocationPopover(true);
+                        }
+                      }}
                     />
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[300px] p-0" align="start">
                   <Command>
                     <CommandList>
-                      <CommandGroup heading="Vancouver Addresses">
+                      <CommandGroup heading="Vancouver Locations">
                         {vancouverAddressSuggestions.length > 0 ? (
                           vancouverAddressSuggestions.map((address, index) => (
                             <CommandItem
@@ -541,7 +589,7 @@ const BrowseFoodPage = () => {
                             </CommandItem>
                           ))
                         ) : (
-                          <CommandEmpty>No addresses found</CommandEmpty>
+                          <CommandEmpty>No locations found</CommandEmpty>
                         )}
                       </CommandGroup>
                     </CommandList>
