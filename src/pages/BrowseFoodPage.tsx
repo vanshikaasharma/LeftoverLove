@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -86,39 +87,6 @@ const FOOD_CATEGORIES = [
   "Other"
 ];
 
-// Mock location API - in a real app, this would connect to a geocoding API
-const geocodeLocation = async (locationName: string) => {
-  console.log(`Geocoding location: ${locationName}`);
-  // Mock response - in a real app, this would call a geocoding API
-  if (locationName.toLowerCase().includes('vancouver')) {
-    return {
-      success: true,
-      coordinates: { lat: 49.2827, lng: -123.1207 },
-      formattedAddress: "Vancouver, BC, Canada"
-    };
-  }
-  
-  // Default response for unknown locations
-  return {
-    success: true,
-    coordinates: { lat: 49.2827, lng: -123.1207 }, // Default to Vancouver
-    formattedAddress: locationName
-  };
-};
-
-// Mock reverse geocoding API - in a real app, this would connect to a geocoding API
-const reverseGeocodeLocation = async (coords: { lat: number, lng: number }) => {
-  console.log(`Reverse geocoding coordinates: ${coords.lat}, ${coords.lng}`);
-  // Mock response - in a real app, this would call a reverse geocoding API
-  return {
-    success: true,
-    formattedAddress: "Your Current Location",
-    city: "Nearby City",
-    region: "Region",
-    country: "Country"
-  };
-};
-
 const BrowseFoodPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -140,11 +108,6 @@ const BrowseFoodPage = () => {
     const savedLocationPermission = localStorage.getItem('locationPermission');
     if (savedLocationPermission) {
       setLocationStatus(savedLocationPermission as 'granted' | 'denied');
-      
-      // If location was previously denied, set Vancouver as default location
-      if (savedLocationPermission === 'denied' && !location) {
-        handleDefaultLocation();
-      }
     } else {
       // Show location dialog when the page loads for the first time
       setShowLocationDialog(true);
@@ -198,7 +161,6 @@ const BrowseFoodPage = () => {
     if (!navigator.geolocation) {
       setLocationStatus('unsupported');
       toast.error("Geolocation is not supported by your browser");
-      handleDefaultLocation();
       return;
     }
 
@@ -227,39 +189,16 @@ const BrowseFoodPage = () => {
         localStorage.setItem('locationPermission', 'denied');
         setIsLoadingLocation(false);
         
-        handleDefaultLocation();
+        toast.error("Location access denied. Please enter your location manually");
       }
     );
   };
 
-  // Set Vancouver as the default location when permission is denied
-  const handleDefaultLocation = async () => {
-    const defaultCity = "Vancouver";
-    setLocation(defaultCity);
-    setShowLocationDialog(false);
-    
-    // Get coordinates for Vancouver using the geocoding API
-    const locationData = await geocodeLocation(defaultCity);
-    if (locationData.success) {
-      setUserCoordinates(locationData.coordinates);
-      toast.info(`Using ${defaultCity} as your location. You can change it anytime.`);
-    }
-  };
-
   // Reverse geocode to get address from coordinates
   const reverseGeocode = async (coords: { lat: number; lng: number }) => {
-    try {
-      // Call the mock reverse geocoding API
-      const locationData = await reverseGeocodeLocation(coords);
-      if (locationData.success) {
-        setLocation(locationData.formattedAddress);
-      } else {
-        setLocation("Your Current Location");
-      }
-    } catch (error) {
-      console.error("Error in reverse geocoding:", error);
-      setLocation("Your Current Location");
-    }
+    // In a real app, this would call a geocoding API
+    // For now, we'll just set a generic location
+    setLocation("Your Current Location");
   };
 
   // Find food listings near user's location
@@ -291,7 +230,8 @@ const BrowseFoodPage = () => {
   const handleDenyLocation = () => {
     setLocationStatus('denied');
     localStorage.setItem('locationPermission', 'denied');
-    handleDefaultLocation();
+    setShowLocationDialog(false);
+    toast.info("You can still search for food by entering a location manually");
   };
 
   // Handle search input changes
@@ -362,15 +302,9 @@ const BrowseFoodPage = () => {
   };
 
   // Handle location suggestion click
-  const handleLocationSuggestionClick = async (suggestion: string) => {
+  const handleLocationSuggestionClick = (suggestion: string) => {
     setLocation(suggestion);
     setShowLocationSuggestions(false);
-    
-    // Get coordinates for the selected location
-    const locationData = await geocodeLocation(suggestion);
-    if (locationData.success) {
-      setUserCoordinates(locationData.coordinates);
-    }
     
     // Filter listings by location
     filterListingsByLocation(suggestion);
@@ -557,9 +491,6 @@ const BrowseFoodPage = () => {
                   <p className="text-gray-600 mb-4">
                     We'll only use your location while you're using this app to help you find nearby food sources.
                   </p>
-                  <p className="text-gray-600 mb-4">
-                    If you decline, we'll use Vancouver as your default location. You can change your location anytime.
-                  </p>
                 </div>
               )}
             </div>
@@ -569,7 +500,7 @@ const BrowseFoodPage = () => {
                 onClick={handleDenyLocation}
                 disabled={isLoadingLocation}
               >
-                Use Vancouver
+                No Thanks
               </Button>
               <Button 
                 onClick={getCurrentLocation} 
