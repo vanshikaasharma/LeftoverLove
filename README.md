@@ -1,73 +1,14 @@
-# Welcome to your Lovable project
+Leftover Love is a hyperlocal food-sharing platform that helps reduce household and business food waste by connecting surplus groceries with people experiencing food insecurity — in real time, before expiry.
 
-## Project info
+Users can log extra food items (along with expiry dates) through our intuitive web interface. When an item nears its expiration, the platform notifies the user and displays the item on a live map, allowing nearby food seekers to view and claim it. If the item goes unclaimed, it can be redirected to a community fridge or compost partner — and the user earns “Soil Credits” that can be redeemed at partnering grocery stores.
 
-**URL**: https://lovable.dev/projects/1d6cd671-b1c5-429f-a077-b7f4575a24f2
+This isn’t just about preventing waste — it’s about turning everyday generosity into a sustainable system of nourishment and reward.
 
-## How can I edit this code?
+We started with a simple but urgent question: “Why does so much edible food get thrown away while so many people go hungry?”
 
-There are several ways of editing your application.
+When we discovered that most household food waste happens because food is forgotten in the fridge or pantry — not because it’s inedible — we knew the solution needed to be both timely and local. Our team members have volunteered at food banks and student-run community fridges, so we’ve seen firsthand the logistical challenges of getting food to those who need it.
 
-**Use Lovable**
+Leftover Love was born out of a desire to make food-sharing effortless and smart — leveraging expiry dates, geolocation, and community-based micro incentives.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1d6cd671-b1c5-429f-a077-b7f4575a24f2) and start prompting.
+Working with a small team of just 3 people meant juggling design, development, and testing all at once — under intense time pressure. Balancing speed with functionality was the toughest part for us.
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/1d6cd671-b1c5-429f-a077-b7f4575a24f2) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
