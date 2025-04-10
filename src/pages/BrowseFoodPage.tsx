@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -95,6 +97,49 @@ const BrowseFoodPage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  // Check if location permission was previously granted
+  useEffect(() => {
+    const locationPermission = localStorage.getItem("locationPermission");
+    if (locationPermission !== "granted") {
+      setShowLocationDialog(true);
+    }
+  }, []);
+
+  const handleLocationPermission = async (granted: boolean) => {
+    if (granted) {
+      setIsGettingLocation(true);
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        
+        // Get the city name using reverse geocoding
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`
+        );
+        const data = await response.json();
+        
+        const city = data.address?.city || data.address?.town || data.address?.village || "Your Location";
+        setLocation(city);
+        localStorage.setItem("locationPermission", "granted");
+        localStorage.setItem("userLocation", city);
+        toast.success(`Location set to ${city}`);
+      } catch (error) {
+        console.error("Error getting location:", error);
+        toast.error("Could not get your location. Please enter it manually.");
+      } finally {
+        setIsGettingLocation(false);
+        setShowLocationDialog(false);
+      }
+    } else {
+      localStorage.setItem("locationPermission", "denied");
+      setShowLocationDialog(false);
+      toast.info("You can enter your location manually");
+    }
+  };
 
   // Load food listings from localStorage on component mount
   useEffect(() => {
@@ -359,6 +404,40 @@ const BrowseFoodPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
       <Header />
       
+      {/* Location Permission Dialog */}
+      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Your Location</DialogTitle>
+            <DialogDescription>
+              To help you find food near you, we need your location. This will help us show you relevant food listings in your area.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => handleLocationPermission(false)}
+              disabled={isGettingLocation}
+            >
+              No, thanks
+            </Button>
+            <Button 
+              onClick={() => handleLocationPermission(true)}
+              disabled={isGettingLocation}
+            >
+              {isGettingLocation ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Getting location...
+                </>
+              ) : (
+                "Share Location"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-green-700 mb-2">Find Food Near You</h1>
