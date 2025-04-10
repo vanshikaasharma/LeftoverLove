@@ -10,17 +10,21 @@ import {
   X,
   Bell,
   HelpCircle,
-  Share2
+  Share2,
+  AlertCircle,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   
   const userRole = localStorage.getItem("userRole") || "consumer";
   const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -35,6 +39,10 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("userRole");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
     navigate("/");
   };
 
@@ -75,20 +83,27 @@ const Header = () => {
               Home
             </Link>
             
-            {userRole === "consumer" ? (
-              <Link 
-                to="/browse-food" 
-                className={cn(
-                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  isActive("/browse-food") 
-                    ? "bg-green-50 text-green-700" 
-                    : "text-gray-700 hover:text-green-600 hover:bg-green-50"
-                )}
-              >
-                <ShoppingBag className="h-4 w-4 mr-1" />
-                Find Food
-              </Link>
-            ) : null}
+            <Button
+              variant="ghost"
+              className="text-gray-700 hover:text-green-600"
+              onClick={() => navigate("/role-selection")}
+            >
+              <Users className="h-4 w-4 mr-1" />
+              Switch Mode
+            </Button>
+            
+            <Link 
+              to="/browse-food" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/browse-food") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+              )}
+            >
+              <ShoppingBag className="h-4 w-4 mr-1" />
+              Find Food
+            </Link>
             
             <Link 
               to="/create-listing" 
@@ -102,6 +117,28 @@ const Header = () => {
               <Share2 className="h-4 w-4 mr-1" />
               Share Food
             </Link>
+            
+            <Link 
+              to="/provider/emergency-requests" 
+              className={cn(
+                "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive("/provider/emergency-requests") 
+                  ? "bg-red-50 text-red-700" 
+                  : "text-gray-700 hover:text-red-600 hover:bg-red-50"
+              )}
+            >
+              <AlertCircle className="h-4 w-4 mr-1" />
+              Emergency Requests
+            </Link>
+            
+            <Button
+              variant="outline"
+              className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+              onClick={() => navigate("/emergency-request")}
+            >
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Request Help
+            </Button>
             
             <Link 
               to="/help" 
@@ -185,23 +222,34 @@ const Header = () => {
               </div>
             </Link>
             
-            {userRole === "consumer" ? (
-              <Link 
-                to="/browse-food" 
-                className={cn(
-                  "block px-3 py-2 text-base font-medium",
-                  isActive("/browse-food") 
-                    ? "bg-green-50 text-green-700" 
-                    : "text-gray-700 hover:bg-green-50 hover:text-green-600"
-                )}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="flex items-center">
-                  <ShoppingBag className="h-5 w-5 mr-2" />
-                  Find Food
-                </div>
-              </Link>
-            ) : null}
+            <button
+              className="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-green-600"
+              onClick={() => {
+                navigate("/role-selection");
+                setMobileMenuOpen(false);
+              }}
+            >
+              <div className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Switch Mode
+              </div>
+            </button>
+            
+            <Link 
+              to="/browse-food" 
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/browse-food") 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+              )}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center">
+                <ShoppingBag className="h-5 w-5 mr-2" />
+                Find Food
+              </div>
+            </Link>
             
             <Link 
               to="/create-listing" 
@@ -218,6 +266,34 @@ const Header = () => {
                 Share Food
               </div>
             </Link>
+            
+            <Link 
+              to="/provider/emergency-requests" 
+              className={cn(
+                "block px-3 py-2 text-base font-medium",
+                isActive("/provider/emergency-requests") 
+                  ? "bg-red-50 text-red-700" 
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-600"
+              )}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                Emergency Requests
+              </div>
+            </Link>
+            
+            <Button
+              variant="outline"
+              className="w-full bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+              onClick={() => {
+                navigate("/emergency-request");
+                setMobileMenuOpen(false);
+              }}
+            >
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Request Help
+            </Button>
             
             <Link 
               to="/help" 
