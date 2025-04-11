@@ -12,8 +12,7 @@ import ProfilePage from "./pages/ProfilePage";
 import HelpPage from "./pages/HelpPage";
 import DashboardPage from "./pages/DashboardPage";
 import FoodListingDetailPage from "./pages/FoodListingDetailPage";
-import EmergencyRequestPage from "./pages/EmergencyRequestPage";
-import ProviderEmergencyRequestsPage from "./pages/ProviderEmergencyRequestsPage";
+import EmergencyPage from "./pages/EmergencyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,8 +33,7 @@ const App = () => (
           <Route path="/help" element={<HelpPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/food-listing/:id" element={<FoodListingDetailPage />} />
-          <Route path="/emergency-request" element={<EmergencyRequestPage />} />
-          <Route path="/provider/emergency-requests" element={<ProviderEmergencyRequestsPage />} />
+          <Route path="/emergency" element={<EmergencyPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

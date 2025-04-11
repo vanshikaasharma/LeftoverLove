@@ -119,26 +119,17 @@ const Header = () => {
             </Link>
             
             <Link 
-              to="/provider/emergency-requests" 
+              to="/emergency" 
               className={cn(
                 "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive("/provider/emergency-requests") 
+                isActive("/emergency") 
                   ? "bg-red-50 text-red-700" 
                   : "text-gray-700 hover:text-red-600 hover:bg-red-50"
               )}
             >
               <AlertCircle className="h-4 w-4 mr-1" />
-              Emergency Requests
+              Emergency
             </Link>
-            
-            <Button
-              variant="outline"
-              className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-              onClick={() => navigate("/emergency-request")}
-            >
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Request Help
-            </Button>
             
             <Link 
               to="/help" 
@@ -268,10 +259,10 @@ const Header = () => {
             </Link>
             
             <Link 
-              to="/provider/emergency-requests" 
+              to="/emergency" 
               className={cn(
                 "block px-3 py-2 text-base font-medium",
-                isActive("/provider/emergency-requests") 
+                isActive("/emergency") 
                   ? "bg-red-50 text-red-700" 
                   : "text-gray-700 hover:bg-red-50 hover:text-red-600"
               )}
@@ -279,21 +270,9 @@ const Header = () => {
             >
               <div className="flex items-center">
                 <AlertCircle className="h-5 w-5 mr-2" />
-                Emergency Requests
+                Emergency
               </div>
             </Link>
-            
-            <Button
-              variant="outline"
-              className="w-full bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-              onClick={() => {
-                navigate("/emergency-request");
-                setMobileMenuOpen(false);
-              }}
-            >
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Request Help
-            </Button>
             
             <Link 
               to="/help" 
