@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingBag, Share2, Package, Clock, TrendingUp, Users, AlertCircle, Leaf, Gift } from "lucide-react";
+import { ShoppingBag, Share2, Package, Clock, TrendingUp, Users, AlertCircle, Leaf, Gift, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -208,7 +208,7 @@ const DashboardPage = () => {
         </div>
         
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="border-2 hover:border-green-500 transition-colors">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -278,6 +278,48 @@ const DashboardPage = () => {
                 onClick={() => navigate("/create-listing")}
               >
                 Share Food
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="border-2 hover:border-green-500 transition-colors">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="text-green-500" />
+                Learn & Resources
+              </CardTitle>
+              <CardDescription>
+                Educational content and guides
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-5 w-5 text-green-500" />
+                  <div>
+                    <h4 className="font-medium">Food Education</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Learn about food storage, safety, and sustainability
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Leaf className="h-5 w-5 text-green-500" />
+                  <div>
+                    <h4 className="font-medium">Sustainability Tips</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Discover ways to reduce food waste and help the environment
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full bg-green-500 hover:bg-green-600"
+                onClick={() => navigate("/learn")}
+              >
+                Explore Resources
               </Button>
             </CardFooter>
           </Card>
