@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, Phone, Mail, Package, DollarSign, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Phone, Mail, Package, DollarSign, Clock, Heart, Share2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CalendarIntegration from "@/components/CalendarIntegration";
+import DeliveryIntegration from "@/components/DeliveryIntegration";
+import FoodBankIntegration from "@/components/FoodBankIntegration";
+import { cn } from "@/lib/utils";
 
 interface FoodListing {
   id: string;
@@ -253,201 +257,238 @@ const FoodListingDetailPage = () => {
             Back
           </Button>
           
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="details">Item Details</TabsTrigger>
-              <TabsTrigger value="location">Location</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Left column - Image */}
-                <div className="md:col-span-1">
-                  <div className="bg-gray-100 rounded-lg overflow-hidden h-64 md:h-full">
-                    {listing.image ? (
-                      <img 
-                        src={listing.image} 
-                        alt={listing.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="h-16 w-16" />
-                      </div>
-                    )}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
+              {/* Left column - Image and Quick Actions */}
+              <div className="space-y-6">
+                <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                  {listing.image ? (
+                    <img 
+                      src={listing.image} 
+                      alt={listing.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Package className="h-16 w-16" />
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <Button 
+                      variant="secondary" 
+                      size="icon"
+                      className="bg-white/80 backdrop-blur-sm hover:bg-white"
+                    >
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="icon"
+                      className="bg-white/80 backdrop-blur-sm hover:bg-white"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                
-                {/* Right column - Details */}
-                <div className="md:col-span-2">
-                  <div className="flex justify-between items-start mb-4">
-                    <h1 className="text-2xl font-bold text-gray-900">{listing.name}</h1>
-                    <Badge className={listing.listingType === "donate" ? "bg-green-500" : "bg-blue-500"}>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <CalendarIntegration
+                    listingId={listing.id}
+                    onSchedulePickup={(date, time, notes) => {
+                      console.log("Scheduled pickup:", { date, time, notes });
+                      toast({
+                        title: "Pickup Scheduled",
+                        description: `Your pickup is scheduled for ${format(date, "PPP")} at ${time}`,
+                      });
+                    }}
+                  />
+                  <DeliveryIntegration
+                    listingId={listing.id}
+                    onRequestDelivery={(address, service) => {
+                      console.log("Delivery requested:", { address, service });
+                      toast({
+                        title: "Delivery Requested",
+                        description: `Your delivery request has been sent to ${service}`,
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Right column - Details */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900">{listing.name}</h1>
+                    <Badge 
+                      className={cn(
+                        "text-sm px-3 py-1",
+                        listing.listingType === "donate" 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-blue-100 text-blue-800"
+                      )}
+                    >
                       {listing.listingType === "donate" ? "Free" : "Reduced Price"}
                     </Badge>
                   </div>
                   
-                  <p className="text-gray-600 mb-6">{listing.description}</p>
+                  <div className="flex items-center gap-2 text-gray-600 mb-4">
+                    <Package className="h-4 w-4" />
+                    <span>Category: {listing.category}</span>
+                  </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-start">
-                      <Package className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Quantity</p>
-                        <p className="text-gray-700">{listing.quantity}</p>
+                  <p className="text-gray-700 text-lg mb-6">{listing.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Package className="h-5 w-5 text-gray-500" />
+                        <span className="font-medium">Quantity</span>
                       </div>
+                      <p className="text-gray-700">{listing.quantity}</p>
                     </div>
                     
                     {listing.listingType === "sell" && (
-                      <div className="flex items-start">
-                        <DollarSign className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium">Price</p>
-                          <p className="text-gray-700">${listing.price}</p>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <DollarSign className="h-5 w-5 text-gray-500" />
+                          <span className="font-medium">Price</span>
                         </div>
+                        <p className="text-gray-700">${listing.price}</p>
                       </div>
                     )}
                     
-                    <div className="flex items-start">
-                      <Calendar className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="h-5 w-5 text-gray-500" />
+                        <span className="font-medium">Expiration</span>
+                      </div>
+                      <p className="text-gray-700">{formatDate(listing.expireDate)}</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-5 w-5 text-gray-500" />
+                        <span className="font-medium">Posted</span>
+                      </div>
+                      <p className="text-gray-700">{formatDate(listing.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Provider Information</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-green-100 p-2 rounded-full">
+                        <User className="h-5 w-5 text-green-600" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium">Expiration Date</p>
-                        <p className="text-gray-700">{formatDate(listing.expireDate)}</p>
+                        <p className="font-medium">{listing.company}</p>
+                        <p className="text-sm text-gray-600">Food Provider</p>
                       </div>
                     </div>
                     
-                    <div className="flex items-start">
-                      <MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-100 p-2 rounded-full">
+                        <MapPin className="h-5 w-5 text-blue-600" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium">Pickup Location</p>
-                        <p className="text-gray-700">{listing.location || "Not specified"}</p>
+                        <p className="font-medium">Pickup Location</p>
+                        <p className="text-sm text-gray-600">{listing.location}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="bg-purple-100 p-2 rounded-full">
+                        <Phone className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Contact</p>
+                        <p className="text-sm text-gray-600">{listing.contactPhone}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="bg-amber-100 p-2 rounded-full">
+                        <Mail className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Email</p>
+                        <p className="text-sm text-gray-600">{listing.contactEmail}</p>
                       </div>
                     </div>
                   </div>
-                  
-                  <Separator className="my-6" />
-                  
-                  <div className="mb-6">
-                    <h2 className="text-lg font-semibold mb-3">Provider Information</h2>
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 text-gray-500 mr-2" />
-                        <p className="text-gray-700">{listing.contactEmail}</p>
-                      </div>
-                      {listing.contactPhone && (
-                        <div className="flex items-center">
-                          <Phone className="h-4 w-4 text-gray-500 mr-2" />
-                          <p className="text-gray-700">{listing.contactPhone}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
+                </div>
+              </div>
+            </div>
+
+            {/* Map and Food Banks Section */}
+            <div className="border-t">
+              <Tabs defaultValue="location" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="location">Location</TabsTrigger>
+                  <TabsTrigger value="foodbanks">Nearby Food Banks</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="location" className="p-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Request this item</CardTitle>
+                      <CardTitle>Pickup Location</CardTitle>
                       <CardDescription>
-                        {listing.listingType === "donate" 
-                          ? "Request this food item for pickup" 
-                          : "Request to purchase this food item"}
+                        {listing?.location || "Location not specified"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-500 mb-4">
-                        {listing.listingType === "donate" 
-                          ? "The provider will review your request and get back to you with pickup details." 
-                          : "The provider will review your request and get back to you with payment and pickup details."}
-                      </p>
-                      
-                      {requestStatus !== "none" && (
-                        <div className="mb-4">
-                          <Badge 
-                            className={
-                              requestStatus === "pending" ? "bg-amber-100 text-amber-800" :
-                              requestStatus === "approved" ? "bg-green-100 text-green-800" :
-                              "bg-red-100 text-red-800"
-                            }
-                          >
-                            {requestStatus === "pending" ? "Request Pending" :
-                             requestStatus === "approved" ? "Request Approved" :
-                             "Request Rejected"}
-                          </Badge>
+                      {isMapLoading ? (
+                        <div className="h-64 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                        </div>
+                      ) : mapCoordinates ? (
+                        <div className="h-64 relative rounded-lg overflow-hidden">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            style={{ border: 0 }}
+                            loading="lazy"
+                            allowFullScreen
+                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapCoordinates.lng-0.01},${mapCoordinates.lat-0.01},${mapCoordinates.lng+0.01},${mapCoordinates.lat+0.01}&layer=mapnik&marker=${mapCoordinates.lat},${mapCoordinates.lng}`}
+                          ></iframe>
+                        </div>
+                      ) : (
+                        <div className="h-64 flex items-center justify-center text-gray-500">
+                          <MapPin className="h-8 w-8 mr-2" />
+                          <p>Location not available</p>
                         </div>
                       )}
                     </CardContent>
                     <CardFooter>
                       <Button 
+                        variant="outline" 
                         className="w-full"
-                        onClick={handleRequestClick}
-                        disabled={requestStatus !== "none"}
-                        variant={requestStatus !== "none" ? "outline" : "default"}
+                        onClick={() => {
+                          if (mapCoordinates) {
+                            window.open(
+                              `https://www.openstreetmap.org/?mlat=${mapCoordinates.lat}&mlon=${mapCoordinates.lng}#map=15/${mapCoordinates.lat}/${mapCoordinates.lng}`,
+                              '_blank'
+                            );
+                          }
+                        }}
+                        disabled={!mapCoordinates}
                       >
-                        {requestStatus === "none" ? (
-                          listing.listingType === "donate" ? "Request Item" : "Purchase Item"
-                        ) : (
-                          requestStatus === "pending" ? "Request Pending" :
-                          requestStatus === "approved" ? "Request Approved" :
-                          "Request Rejected"
-                        )}
+                        <MapPin className="h-4 w-4 mr-2" />
+                        View on OpenStreetMap
                       </Button>
                     </CardFooter>
                   </Card>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="location">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pickup Location</CardTitle>
-                  <CardDescription>
-                    {listing?.location || "Location not specified"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isMapLoading ? (
-                    <div className="h-64 flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-                    </div>
-                  ) : mapCoordinates ? (
-                    <div className="h-64 relative">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapCoordinates.lng-0.01},${mapCoordinates.lat-0.01},${mapCoordinates.lng+0.01},${mapCoordinates.lat+0.01}&layer=mapnik&marker=${mapCoordinates.lat},${mapCoordinates.lng}`}
-                      ></iframe>
-                    </div>
-                  ) : (
-                    <div className="h-64 flex items-center justify-center text-gray-500">
-                      <MapPin className="h-8 w-8 mr-2" />
-                      <p>Location not available</p>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => {
-                      if (mapCoordinates) {
-                        window.open(
-                          `https://www.openstreetmap.org/?mlat=${mapCoordinates.lat}&mlon=${mapCoordinates.lng}#map=15/${mapCoordinates.lat}/${mapCoordinates.lng}`,
-                          '_blank'
-                        );
-                      }
-                    }}
-                    disabled={!mapCoordinates}
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    View on OpenStreetMap
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                </TabsContent>
+                
+                <TabsContent value="foodbanks" className="p-6">
+                  <FoodBankIntegration />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </div>
       </div>
 
