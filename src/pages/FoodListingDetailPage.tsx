@@ -23,6 +23,9 @@ import CalendarIntegration from "@/components/CalendarIntegration";
 import DeliveryIntegration from "@/components/DeliveryIntegration";
 import FoodBankIntegration from "@/components/FoodBankIntegration";
 import { cn } from "@/lib/utils";
+import { cache } from "@/lib/cache";
+import { performanceMonitor } from "@/lib/performance";
+import MapView from "@/components/MapView";
 
 interface FoodListing {
   id: string;
@@ -57,20 +60,31 @@ const FoodListingDetailPage = () => {
   const [isMapLoading, setIsMapLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would fetch the listing from an API
-    // For now, we'll get it from localStorage
-    const fetchListing = () => {
+    const fetchListing = async () => {
       try {
         setLoading(true);
         
-        // Get all listings from localStorage
-        const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+        // Check cache first
+        const cachedListing = cache.get<FoodListing>(`listing_${id}`);
+        if (cachedListing) {
+          setListing(cachedListing);
+          setLoading(false);
+          return;
+        }
+
+        // If not in cache, fetch from API
+        const listing = await performanceMonitor.measureAsync(
+          'fetchListing',
+          async () => {
+            const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+            return allListings.find((item: FoodListing) => item.id === id);
+          }
+        );
         
-        // Find the specific listing by ID
-        const foundListing = allListings.find((item: FoodListing) => item.id === id);
-        
-        if (foundListing) {
-          setListing(foundListing);
+        if (listing) {
+          setListing(listing);
+          // Cache the listing for 5 minutes
+          cache.set(`listing_${id}`, listing);
         } else {
           setError("Listing not found");
         }
@@ -120,69 +134,56 @@ const FoodListingDetailPage = () => {
   };
 
   const handleRequestClick = () => {
-    if (requestStatus === "none") {
-      setIsRequestDialogOpen(true);
-    }
+    performanceMonitor.measure('handleRequestClick', () => {
+      if (requestStatus === "none") {
+        setIsRequestDialogOpen(true);
+      }
+    });
   };
 
   const handleSubmitRequest = () => {
-    if (!listing || !userEmail || !userName) return;
-    
-    // Create a new request
-    const newRequest = {
-      id: Date.now().toString(),
-      listingId: listing.id,
-      listingName: listing.name,
-      requesterName: userName,
-      requesterEmail: userEmail,
-      providerEmail: listing.contactEmail,
-      providerId: listing.userId,
-      message: requestMessage,
-      status: "Pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Get existing requests
-    const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
-    
-    // Add the new request
-    allRequests.push(newRequest);
-    
-    // Save back to localStorage
-    localStorage.setItem("foodRequests", JSON.stringify(allRequests));
-    
-    // Add to user's purchase history
-    const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userEmail}`) || "[]");
-    
-    // Create a purchase history entry
-    const purchaseEntry = {
-      id: Date.now().toString(),
-      listingId: listing.id,
-      itemName: listing.name,
-      quantity: listing.quantity,
-      price: listing.listingType === "donate" ? "Free" : listing.price,
-      status: "Pending",
-      date: new Date().toISOString(),
-      providerName: "Food Provider",
-      providerEmail: listing.contactEmail,
-      requestId: newRequest.id
-    };
-    
-    // Add to purchase history
-    purchaseHistory.push(purchaseEntry);
-    
-    // Save back to localStorage
-    localStorage.setItem(`purchaseHistory_${userEmail}`, JSON.stringify(purchaseHistory));
-    
-    // Update request status
-    setRequestStatus("pending");
-    
-    // Close dialog
-    setIsRequestDialogOpen(false);
-    
-    // Show success message
-    toast.success("Your request has been sent to the provider");
+    performanceMonitor.measure('handleSubmitRequest', () => {
+      if (!listing || !userEmail || !userName) return;
+      
+      const newRequest = {
+        id: Date.now().toString(),
+        listingId: listing.id,
+        listingName: listing.name,
+        requesterName: userName,
+        requesterEmail: userEmail,
+        providerEmail: listing.contactEmail,
+        providerId: listing.userId,
+        message: requestMessage,
+        status: "Pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
+      allRequests.push(newRequest);
+      localStorage.setItem("foodRequests", JSON.stringify(allRequests));
+      
+      const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userEmail}`) || "[]");
+      const purchaseEntry = {
+        id: Date.now().toString(),
+        listingId: listing.id,
+        itemName: listing.name,
+        quantity: listing.quantity,
+        price: listing.listingType === "donate" ? "Free" : listing.price,
+        status: "Pending",
+        date: new Date().toISOString(),
+        providerName: "Food Provider",
+        providerEmail: listing.contactEmail,
+        requestId: newRequest.id
+      };
+      
+      purchaseHistory.push(purchaseEntry);
+      localStorage.setItem(`purchaseHistory_${userEmail}`, JSON.stringify(purchaseHistory));
+      
+      setRequestStatus("pending");
+      setIsRequestDialogOpen(false);
+      toast.success("Your request has been sent to the provider");
+    });
   };
 
   // Function to get coordinates from location
@@ -263,11 +264,20 @@ const FoodListingDetailPage = () => {
               <div className="space-y-6">
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
                   {listing.image ? (
-                    <img 
-                      src={listing.image} 
-                      alt={listing.name} 
-                      className="w-full h-full object-cover"
-                    />
+                    <>
+                      <img 
+                        src={listing.image} 
+                        alt={listing.name} 
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onLoad={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.opacity = '1';
+                        }}
+                        style={{ opacity: 0, transition: 'opacity 0.3s ease-in-out' }}
+                      />
+                      <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
                       <Package className="h-16 w-16" />
@@ -432,55 +442,11 @@ const FoodListingDetailPage = () => {
                 </TabsList>
                 
                 <TabsContent value="location" className="p-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pickup Location</CardTitle>
-                      <CardDescription>
-                        {listing?.location || "Location not specified"}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {isMapLoading ? (
-                        <div className="h-64 flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-                        </div>
-                      ) : mapCoordinates ? (
-                        <div className="h-64 relative rounded-lg overflow-hidden">
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            allowFullScreen
-                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapCoordinates.lng-0.01},${mapCoordinates.lat-0.01},${mapCoordinates.lng+0.01},${mapCoordinates.lat+0.01}&layer=mapnik&marker=${mapCoordinates.lat},${mapCoordinates.lng}`}
-                          ></iframe>
-                        </div>
-                      ) : (
-                        <div className="h-64 flex items-center justify-center text-gray-500">
-                          <MapPin className="h-8 w-8 mr-2" />
-                          <p>Location not available</p>
-                        </div>
-                      )}
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => {
-                          if (mapCoordinates) {
-                            window.open(
-                              `https://www.openstreetmap.org/?mlat=${mapCoordinates.lat}&mlon=${mapCoordinates.lng}#map=15/${mapCoordinates.lat}/${mapCoordinates.lng}`,
-                              '_blank'
-                            );
-                          }
-                        }}
-                        disabled={!mapCoordinates}
-                      >
-                        <MapPin className="h-4 w-4 mr-2" />
-                        View on OpenStreetMap
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                  <MapView 
+                    location={listing?.location || "Location not specified"}
+                    coordinates={mapCoordinates}
+                    isLoading={isMapLoading}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="foodbanks" className="p-6">
