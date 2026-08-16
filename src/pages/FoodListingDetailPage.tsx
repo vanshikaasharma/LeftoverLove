@@ -23,8 +23,6 @@ import CalendarIntegration from "@/components/CalendarIntegration";
 import DeliveryIntegration from "@/components/DeliveryIntegration";
 import FoodBankIntegration from "@/components/FoodBankIntegration";
 import { cn } from "@/lib/utils";
-import { cache } from "@/lib/cache";
-import { performanceMonitor } from "@/lib/performance";
 import MapView from "@/components/MapView";
 
 interface FoodListing {
@@ -60,37 +58,19 @@ const FoodListingDetailPage = () => {
   const [isMapLoading, setIsMapLoading] = useState(true);
 
   useEffect(() => {
-    const fetchListing = async () => {
+    const fetchListing = () => {
       try {
         setLoading(true);
-        
-        // Check cache first
-        const cachedListing = cache.get<FoodListing>(`listing_${id}`);
-        if (cachedListing) {
-          setListing(cachedListing);
-          setLoading(false);
-          return;
-        }
+        const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+        const found = allListings.find((item: FoodListing) => item.id === id);
 
-        // If not in cache, fetch from API
-        const listing = await performanceMonitor.measureAsync(
-          'fetchListing',
-          async () => {
-            const allListings = JSON.parse(localStorage.getItem("foodListings") || "[]");
-            return allListings.find((item: FoodListing) => item.id === id);
-          }
-        );
-        
-        if (listing) {
-          setListing(listing);
-          // Cache the listing for 5 minutes
-          cache.set(`listing_${id}`, listing);
+        if (found) {
+          setListing(found);
         } else {
           setError("Listing not found");
         }
-      } catch (err) {
+      } catch {
         setError("Failed to load listing");
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -106,14 +86,15 @@ const FoodListingDetailPage = () => {
     // Check if user has already requested this item
     const checkRequestStatus = () => {
       if (!id || !user.email) return;
-      
+
       const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
-      const userRequest = allRequests.find((request: any) => 
-        request.listingId === id && request.requesterEmail === user.email
+      const userRequest = allRequests.find(
+        (request: { listingId: string; requesterEmail: string; status: string }) =>
+          request.listingId === id && request.requesterEmail === user.email
       );
-      
+
       if (userRequest) {
-        setRequestStatus(userRequest.status.toLowerCase());
+        setRequestStatus(userRequest.status.toLowerCase() as "pending" | "approved" | "rejected");
       }
     };
 
@@ -134,56 +115,50 @@ const FoodListingDetailPage = () => {
   };
 
   const handleRequestClick = () => {
-    performanceMonitor.measure('handleRequestClick', () => {
-      if (requestStatus === "none") {
-        setIsRequestDialogOpen(true);
-      }
-    });
+    if (requestStatus === "none") {
+      setIsRequestDialogOpen(true);
+    }
   };
 
   const handleSubmitRequest = () => {
-    performanceMonitor.measure('handleSubmitRequest', () => {
-      if (!listing || !userEmail || !userName) return;
-      
-      const newRequest = {
-        id: Date.now().toString(),
-        listingId: listing.id,
-        listingName: listing.name,
-        requesterName: userName,
-        requesterEmail: userEmail,
-        providerEmail: listing.contactEmail,
-        providerId: listing.userId,
-        message: requestMessage,
-        status: "Pending",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
-      allRequests.push(newRequest);
-      localStorage.setItem("foodRequests", JSON.stringify(allRequests));
-      
-      const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userEmail}`) || "[]");
-      const purchaseEntry = {
-        id: Date.now().toString(),
-        listingId: listing.id,
-        itemName: listing.name,
-        quantity: listing.quantity,
-        price: listing.listingType === "donate" ? "Free" : listing.price,
-        status: "Pending",
-        date: new Date().toISOString(),
-        providerName: "Food Provider",
-        providerEmail: listing.contactEmail,
-        requestId: newRequest.id
-      };
-      
-      purchaseHistory.push(purchaseEntry);
-      localStorage.setItem(`purchaseHistory_${userEmail}`, JSON.stringify(purchaseHistory));
-      
-      setRequestStatus("pending");
-      setIsRequestDialogOpen(false);
-      toast.success("Your request has been sent to the provider");
+    if (!listing || !userEmail || !userName) return;
+
+    const newRequest = {
+      id: Date.now().toString(),
+      listingId: listing.id,
+      listingName: listing.name,
+      requesterName: userName,
+      requesterEmail: userEmail,
+      providerEmail: listing.contactEmail,
+      providerId: listing.userId,
+      message: requestMessage,
+      status: "Pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
+    allRequests.push(newRequest);
+    localStorage.setItem("foodRequests", JSON.stringify(allRequests));
+
+    const purchaseHistory = JSON.parse(localStorage.getItem(`purchaseHistory_${userEmail}`) || "[]");
+    purchaseHistory.push({
+      id: Date.now().toString(),
+      listingId: listing.id,
+      itemName: listing.name,
+      quantity: listing.quantity,
+      price: listing.listingType === "donate" ? "Free" : listing.price,
+      status: "Pending",
+      date: new Date().toISOString(),
+      providerName: "Food Provider",
+      providerEmail: listing.contactEmail,
+      requestId: newRequest.id,
     });
+    localStorage.setItem(`purchaseHistory_${userEmail}`, JSON.stringify(purchaseHistory));
+
+    setRequestStatus("pending");
+    setIsRequestDialogOpen(false);
+    toast.success("Your request has been sent to the provider");
   };
 
   // Function to get coordinates from location
@@ -200,8 +175,7 @@ const FoodListingDetailPage = () => {
           lng: parseFloat(data[0].lon)
         });
       }
-    } catch (error) {
-      console.error("Error getting coordinates:", error);
+    } catch {
       toast.error("Could not load map location");
     } finally {
       setIsMapLoading(false);
@@ -304,22 +278,16 @@ const FoodListingDetailPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <CalendarIntegration
                     listingId={listing.id}
-                    onSchedulePickup={(date, time, notes) => {
-                      console.log("Scheduled pickup:", { date, time, notes });
-                      toast({
-                        title: "Pickup Scheduled",
-                        description: `Your pickup is scheduled for ${format(date, "PPP")} at ${time}`,
-                      });
+                    onSchedulePickup={(date, time, _notes) => {
+                      toast.success(
+                        `Pickup scheduled for ${format(date, "PPP")} at ${time}`
+                      );
                     }}
                   />
                   <DeliveryIntegration
                     listingId={listing.id}
-                    onRequestDelivery={(address, service) => {
-                      console.log("Delivery requested:", { address, service });
-                      toast({
-                        title: "Delivery Requested",
-                        description: `Your delivery request has been sent to ${service}`,
-                      });
+                    onRequestDelivery={(_address, service) => {
+                      toast.success(`Delivery request sent to ${service}`);
                     }}
                   />
                 </div>

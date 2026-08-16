@@ -127,8 +127,7 @@ const BrowseFoodPage = () => {
         localStorage.setItem("locationPermission", "granted");
         localStorage.setItem("userLocation", city);
         toast.success(`Location set to ${city}`);
-      } catch (error) {
-        console.error("Error getting location:", error);
+      } catch {
         toast.error("Could not get your location. Please enter it manually.");
       } finally {
         setIsGettingLocation(false);

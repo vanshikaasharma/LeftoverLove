@@ -24,44 +24,41 @@ const CreateListingPage = () => {
   const { toast } = useToast();
 
   const handleSubmitListing = (foodItem: FoodItemData) => {
-    // In a real app, this would save the food listing to a database
-    console.log("Food listing submitted:", foodItem);
-    
-    // For demonstration, store in localStorage
     const listings = JSON.parse(localStorage.getItem("foodListings") || "[]");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     const newListing = {
       ...foodItem,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       status: "Active",
+      userId: user.userId || "",
     };
     listings.push(newListing);
     localStorage.setItem("foodListings", JSON.stringify(listings));
-    
-    // Store in user's donation history
-    const userEmail = JSON.parse(localStorage.getItem("user") || "{}").email;
-    if (userEmail) {
-      const donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${userEmail}`) || "[]");
+
+    if (user.email) {
+      const donationHistory = JSON.parse(
+        localStorage.getItem(`donationHistory_${user.email}`) || "[]"
+      );
       donationHistory.push({
         id: newListing.id,
-        date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
+        date: new Date().toISOString().split("T")[0],
         item: foodItem.name,
         quantity: foodItem.quantity,
         status: foodItem.isExpired ? "Expired" : "Active",
         listingType: foodItem.listingType,
         category: foodItem.category,
-        isExpired: foodItem.isExpired
+        isExpired: foodItem.isExpired,
       });
-      localStorage.setItem(`donationHistory_${userEmail}`, JSON.stringify(donationHistory));
+      localStorage.setItem(`donationHistory_${user.email}`, JSON.stringify(donationHistory));
     }
-    
+
     toast({
       title: "Listing created",
       description: `Your food listing for "${foodItem.name}" has been created successfully.`,
     });
-    
-    // Navigate back to role selection
-    navigate("/role-selection");
+
+    navigate("/dashboard");
   };
 
   return (

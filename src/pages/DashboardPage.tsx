@@ -65,25 +65,15 @@ const DashboardPage = () => {
     
     // Count active donations (status is "Active")
     const activeDonations = donationHistory.filter((donation: any) => donation.status === "Active").length;
-    
-    // Count expired donations
-    const expiredDonations = donationHistory.filter((donation: any) => 
-      donation.status === "Expired" || donation.isExpired === true
-    ).length;
-    
+
     // Get pending requests for the user's listings
     const userListings = allListings.filter((listing: any) => listing.providerEmail === userEmail);
     const allRequests = JSON.parse(localStorage.getItem("foodRequests") || "[]");
-    
-    // Filter requests for the user's listings that are pending
-    // This includes requests where the user is the provider (either by email or userId)
+
+    // Pending requests for this user's listings (match by listing or provider userId)
     const userPendingRequests = allRequests.filter((request: any) => {
-      // Check if the request is for one of the user's listings
       const listing = userListings.find((l: any) => l.id === request.listingId);
-      
-      // Also check if the request has the user's ID as the provider
-      const isProviderById = request.providerId === userData.id;
-      
+      const isProviderById = request.providerId === userData.userId;
       return (listing || isProviderById) && request.status === "Pending";
     });
     

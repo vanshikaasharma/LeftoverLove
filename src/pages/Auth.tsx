@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthForm from "@/components/AuthForm";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,117 +8,113 @@ interface UserData {
   password: string;
 }
 
+interface StoredUser {
+  name: string;
+  email: string;
+  passwordHash: string;
+  userId: string;
+  joinDate: string;
+}
+
+// Simple hash so we don't store plain passwords in localStorage
+async function hashPassword(password: string): Promise<string> {
+  const data = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function getUsers(): StoredUser[] {
+  return JSON.parse(localStorage.getItem("users") || "[]");
+}
+
+function saveSession(user: Pick<StoredUser, "name" | "email" | "userId" | "joinDate">) {
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      name: user.name,
+      email: user.email,
+      isAuthenticated: true,
+      userId: user.userId,
+      joinDate: user.joinDate,
+    })
+  );
+}
+
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleAuth = (userData: UserData, isSignUp: boolean) => {
-    // In a real app, this would call an authentication API
-    // For demonstration, we're simulating successful auth
-    
+  const handleAuth = async (userData: UserData, isSignUp: boolean) => {
+    const users = getUsers();
+    const existingUser = users.find((user) => user.email === userData.email);
+    const passwordHash = await hashPassword(userData.password);
+
     if (isSignUp) {
-      // Check if user already exists
-      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-      const existingUser = existingUsers.find((user: any) => user.email === userData.email);
-      
       if (existingUser) {
-        // User already exists, show error
         toast({
           title: "Account already exists",
-          description: "An account with this email already exists. Please sign in instead.",
+          description: "Please sign in instead.",
           variant: "destructive",
         });
         return;
       }
-      
-      // Generate a unique user ID for new accounts
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const joinDate = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      
-      // Store user data in localStorage with the new ID
-      localStorage.setItem("user", JSON.stringify({
+
+      const newUser: StoredUser = {
         name: userData.name || "User",
         email: userData.email,
-        isAuthenticated: true,
-        userId: userId,
-        joinDate: joinDate
-      }));
-      
-      // Add to users list with password (in a real app, this would be hashed)
-      existingUsers.push({
-        name: userData.name || "User",
-        email: userData.email,
-        password: userData.password, // In a real app, this would be hashed
-        userId: userId,
-        joinDate: joinDate
-      });
-      localStorage.setItem("users", JSON.stringify(existingUsers));
-      
+        passwordHash,
+        userId: `user_${Date.now()}`,
+        joinDate: new Date().toISOString().split("T")[0],
+      };
+
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+      saveSession(newUser);
+
       toast({
         title: "Account created",
         description: "Your account has been created successfully.",
       });
     } else {
-      // For sign in, check if user exists and verify password
-      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-      const existingUser = existingUsers.find((user: any) => user.email === userData.email);
-      
-      if (existingUser) {
-        // User exists, check password
-        if (existingUser.password !== userData.password) {
-          // Incorrect password
-          toast({
-            title: "Incorrect password",
-            description: "The password you entered is incorrect. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Password correct, sign in
-        localStorage.setItem("user", JSON.stringify({
-          name: existingUser.name || "User",
-          email: existingUser.email,
-          isAuthenticated: true,
-          userId: existingUser.userId,
-          joinDate: existingUser.joinDate
-        }));
-        
+      if (!existingUser) {
         toast({
-          title: "Welcome back",
-          description: "You have been signed in successfully.",
+          title: "Account not found",
+          description: "Please sign up first.",
+          variant: "destructive",
         });
-      } else {
-        // User doesn't exist in our records, create a new ID
-        const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        const joinDate = new Date().toISOString().split('T')[0];
-        
-        localStorage.setItem("user", JSON.stringify({
-          name: userData.name || "User",
-          email: userData.email,
-          isAuthenticated: true,
-          userId: userId,
-          joinDate: joinDate
-        }));
-        
-        // Add to users list
-        existingUsers.push({
-          name: userData.name || "User",
-          email: userData.email,
-          password: userData.password, // In a real app, this would be hashed
-          userId: userId,
-          joinDate: joinDate
-        });
-        localStorage.setItem("users", JSON.stringify(existingUsers));
-        
-        toast({
-          title: "Account created",
-          description: "Your account has been created successfully.",
-        });
+        return;
       }
+
+      // Support older demo accounts that still have a plain password field
+      const storedHash =
+        existingUser.passwordHash ||
+        (existingUser as StoredUser & { password?: string }).password;
+
+      if (storedHash !== passwordHash && storedHash !== userData.password) {
+        toast({
+          title: "Incorrect password",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Upgrade old accounts to hashed passwords when they sign in
+      if (!existingUser.passwordHash) {
+        existingUser.passwordHash = passwordHash;
+        delete (existingUser as StoredUser & { password?: string }).password;
+        localStorage.setItem("users", JSON.stringify(users));
+      }
+
+      saveSession(existingUser);
+      toast({
+        title: "Welcome back",
+        description: "You have been signed in successfully.",
+      });
     }
-    
-    // Redirect to dashboard instead of role selection
+
     navigate("/dashboard");
   };
 
@@ -131,7 +126,7 @@ const Auth = () => {
           Connecting those with food to share with those who need it most
         </p>
       </div>
-      
+
       <AuthForm onAuth={handleAuth} />
     </div>
   );

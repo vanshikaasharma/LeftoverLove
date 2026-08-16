@@ -15,7 +15,6 @@ import {
   Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -158,11 +157,8 @@ const Header = () => {
             </Link>
             
             {notificationsEnabled && (
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
                 <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500">
-                  2
-                </Badge>
               </Button>
             )}
             
@@ -311,9 +307,6 @@ const Header = () => {
                 <div className="flex items-center">
                   <Bell className="h-5 w-5 mr-2" />
                   Notifications
-                  <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
-                    2
-                  </Badge>
                 </div>
               </div>
             )}

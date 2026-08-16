@@ -14,7 +14,7 @@ interface UserData {
 }
 
 interface AuthFormProps {
-  onAuth: (userData: UserData, isSignUp: boolean) => void;
+  onAuth: (userData: UserData, isSignUp: boolean) => void | Promise<void>;
 }
 
 const AuthForm = ({ onAuth }: AuthFormProps) => {

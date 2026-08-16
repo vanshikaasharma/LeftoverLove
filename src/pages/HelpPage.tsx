@@ -67,13 +67,10 @@ const HelpPage = () => {
           
           <div className="space-y-2">
             <p className="text-gray-600">
-              <span className="font-medium">Email:</span> support@foodshareconnect.com
+              <span className="font-medium">Email:</span> support@leftoverlove.local
             </p>
             <p className="text-gray-600">
-              <span className="font-medium">Phone:</span> (555) 123-4567
-            </p>
-            <p className="text-gray-600">
-              <span className="font-medium">Hours:</span> Monday-Friday, 9am-5pm EST
+              <span className="font-medium">Note:</span> This is a student project demo — contact info is for display only.
             </p>
           </div>
         </div>
